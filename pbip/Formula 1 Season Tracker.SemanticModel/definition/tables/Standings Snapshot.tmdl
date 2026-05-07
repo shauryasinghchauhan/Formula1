@@ -1,4 +1,4 @@
-table StandingsSnapshot
+table 'Standings Snapshot'
 	lineageTag: 05dd4230-2550-44c7-a3a2-bb4b7f9b48c2
 
 	column Round
@@ -54,7 +54,7 @@ table StandingsSnapshot
 
 		annotation SummarizationSetBy = Automatic
 
-	partition StandingsSnapshot = m
+	partition 'Standings Snapshot' = m
 		mode: import
 		source =
 				// Query: StandingsSnapshot

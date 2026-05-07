@@ -4,14 +4,14 @@
     {
       "ordinal": 0,
       "scrollPosition": {
-        "x": 250.66665649414063,
+        "x": 0,
         "y": 0
       },
       "nodes": [
         {
           "location": {
             "x": 424.28571428571433,
-            "y": 255.71428571428569
+            "y": 266.42857142857144
           },
           "nodeIndex": "Constructors",
           "nodeLineageTag": "f61062f5-7a85-4a0f-91b6-48700a3dcef4",
@@ -24,7 +24,7 @@
         {
           "location": {
             "x": 424.28571428571445,
-            "y": 21.428571428571455
+            "y": 32.142857142857181
           },
           "nodeIndex": "Drivers",
           "nodeLineageTag": "3323a402-6969-432a-80ed-f001dc0cd707",
@@ -37,7 +37,7 @@
         {
           "location": {
             "x": 867.92737551173548,
-            "y": 211.42857142857139
+            "y": 222.14285714285711
           },
           "nodeIndex": "Qualifying",
           "nodeLineageTag": "919c1a9c-57b9-4b59-b6b8-433b1d6604db",
@@ -50,7 +50,7 @@
         {
           "location": {
             "x": 425.1863596580024,
-            "y": 481.4285714285715
+            "y": 492.14285714285722
           },
           "nodeIndex": "Races",
           "nodeLineageTag": "0f691953-ea3b-4656-9aed-fee4f6195907",
@@ -63,7 +63,7 @@
         {
           "location": {
             "x": 0,
-            "y": 215.21180812282824
+            "y": 225.92609383711397
           },
           "nodeIndex": "Results",
           "nodeLineageTag": "aa76babd-fb7f-4dd7-a81a-d8472992abc9",
@@ -75,10 +75,23 @@
         },
         {
           "location": {
-            "x": 1289.05579285653,
-            "y": 295.29664660338966
+            "x": 1633.05579285653,
+            "y": 0
           },
-          "nodeIndex": "StandingsSnapshot",
+          "nodeIndex": "_Measures",
+          "nodeLineageTag": "2480487f-24b9-4f80-8fe3-6ee3d2e8868b",
+          "size": {
+            "height": 104,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1242.3891261898632,
+            "y": 136.01093231767535
+          },
+          "nodeIndex": "Standings Snapshot",
           "nodeLineageTag": "05dd4230-2550-44c7-a3a2-bb4b7f9b48c2",
           "size": {
             "height": 224,
@@ -88,13 +101,13 @@
         },
         {
           "location": {
-            "x": 1573.05579285653,
-            "y": 335.14285714285717
+            "x": 1244.7224506222365,
+            "y": 424.04761904761909
           },
-          "nodeIndex": "_Measures",
-          "nodeLineageTag": "2480487f-24b9-4f80-8fe3-6ee3d2e8868b",
+          "nodeIndex": "Lap Positions",
+          "nodeLineageTag": "3dc437a8-f2b3-4a2f-b267-0f53348662dc",
           "size": {
-            "height": 104,
+            "height": 200,
             "width": 234
           },
           "zIndex": 0

@@ -24,3 +24,10 @@ expression CurrentRound =
 
 	annotation PBI_ResultType = Number
 
+expression SelectedRound = 1 meta [IsParameterQuery=true, Type="Number", IsParameterQueryRequired=true]
+	lineageTag: 7a62fb6c-cfe6-48ac-b9a0-cb3405c71313
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Number
+

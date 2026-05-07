@@ -83,12 +83,12 @@ table _Measures
 			
 			VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
 			VAR LatestRound =
-			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+			    CALCULATE ( MAX ( 'Standings Snapshot'[Round] ), ALL ( Races ) )
 			RETURN
 			    CALCULATE (
-			        MAX ( StandingsSnapshot[Position] ),
-			        StandingsSnapshot[DriverId] = CurrentDriver,
-			        StandingsSnapshot[Round] = LatestRound
+			        MAX ( 'Standings Snapshot'[Position] ),
+			        'Standings Snapshot'[DriverId] = CurrentDriver,
+			        'Standings Snapshot'[Round] = LatestRound
 			    )
 		formatString: 0
 		lineageTag: 8b5baa41-60dd-45c0-abd7-3e630cd10efd
@@ -96,12 +96,12 @@ table _Measures
 	measure 'Points Gap to Leader' =
 			
 			VAR LatestRound =
-			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+			    CALCULATE ( MAX ( 'Standings Snapshot'[Round] ), ALL ( Races ) )
 			VAR LeaderPoints =
 			    CALCULATE (
-			        MAX ( StandingsSnapshot[Points] ),
-			        StandingsSnapshot[Position] = 1,
-			        StandingsSnapshot[Round] = LatestRound,
+			        MAX ( 'Standings Snapshot'[Points] ),
+			        'Standings Snapshot'[Position] = 1,
+			        'Standings Snapshot'[Round] = LatestRound,
 			        ALL ( Drivers )
 			    )
 			VAR DriverPoints = [Total Points]
@@ -165,18 +165,18 @@ table _Measures
 			
 			VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
 			VAR LatestRound =
-			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+			    CALCULATE ( MAX ( 'Standings Snapshot'[Round] ), ALL ( Races ) )
 			VAR ThisPos =
 			    CALCULATE (
-			        MAX ( StandingsSnapshot[Position] ),
-			        StandingsSnapshot[Round] = LatestRound,
-			        StandingsSnapshot[DriverId] = CurrentDriver
+			        MAX ( 'Standings Snapshot'[Position] ),
+			        'Standings Snapshot'[Round] = LatestRound,
+			        'Standings Snapshot'[DriverId] = CurrentDriver
 			    )
 			VAR PrevPos =
 			    CALCULATE (
-			        MAX ( StandingsSnapshot[Position] ),
-			        StandingsSnapshot[Round] = LatestRound - 1,
-			        StandingsSnapshot[DriverId] = CurrentDriver
+			        MAX ( 'Standings Snapshot'[Position] ),
+			        'Standings Snapshot'[Round] = LatestRound - 1,
+			        'Standings Snapshot'[DriverId] = CurrentDriver
 			    )
 			RETURN
 			    PrevPos - ThisPos
@@ -294,85 +294,77 @@ table _Measures
 			[Teammate Race H2H Wins] & " - " & [Teammate Race H2H Losses]
 		lineageTag: 9a9e10ae-a18d-437f-8961-a20754c36027
 
-	measure 'Overview Dashboard HTML' =
+	measure 'Overview HTML' =
 			
 			
 			// ---------- CORE FACTS ----------
 			VAR LatestRound =
-			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( StandingsSnapshot ) )
+			    CALCULATE ( MAX ( 'Standings Snapshot'[Round] ), ALL ( 'Standings Snapshot' ) )
 			VAR TotalRounds =
 			    CALCULATE ( DISTINCTCOUNT ( Races[Round] ), ALL ( Races ) )
 			VAR LatestRaceName =
-			    CALCULATE (
-			        MAX ( Races[RaceName] ),
-			        Races[Round] = LatestRound,
-			        ALL ( Races )
-			    )
+			    CALCULATE ( MAX ( Races[RaceName] ), Races[Round] = LatestRound, ALL ( Races ) )
 			VAR LatestCountry =
-			    CALCULATE (
-			        MAX ( Races[Country] ),
-			        Races[Round] = LatestRound,
-			        ALL ( Races )
-			    )
+			    CALCULATE ( MAX ( Races[Country] ), Races[Round] = LatestRound, ALL ( Races ) )
 			VAR RacesRem = TotalRounds - LatestRound
 			
 			// ---------- LEADER ----------
 			VAR LeaderId =
 			    CALCULATE (
-			        MAX ( StandingsSnapshot[DriverId] ),
-			        StandingsSnapshot[Round] = LatestRound,
-			        StandingsSnapshot[Position] = 1,
-			        ALL ( StandingsSnapshot )
+			        MAX ( 'Standings Snapshot'[DriverId] ),
+			        'Standings Snapshot'[Round] = LatestRound,
+			        'Standings Snapshot'[Position] = 1,
+			        ALL ( 'Standings Snapshot' )
 			    )
 			VAR LeaderName =
 			    LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], LeaderId )
 			VAR LeaderPoints =
 			    CALCULATE (
-			        MAX ( StandingsSnapshot[Points] ),
-			        StandingsSnapshot[Round] = LatestRound,
-			        StandingsSnapshot[Position] = 1,
-			        ALL ( StandingsSnapshot )
+			        MAX ( 'Standings Snapshot'[Points] ),
+			        'Standings Snapshot'[Round] = LatestRound,
+			        'Standings Snapshot'[Position] = 1,
+			        ALL ( 'Standings Snapshot' )
 			    )
 			VAR P2Points =
 			    CALCULATE (
-			        MAX ( StandingsSnapshot[Points] ),
-			        StandingsSnapshot[Round] = LatestRound,
-			        StandingsSnapshot[Position] = 2,
-			        ALL ( StandingsSnapshot )
+			        MAX ( 'Standings Snapshot'[Points] ),
+			        'Standings Snapshot'[Round] = LatestRound,
+			        'Standings Snapshot'[Position] = 2,
+			        ALL ( 'Standings Snapshot' )
 			    )
 			VAR P1P2Gap = LeaderPoints - P2Points
 			
-			// ---------- DRIVER STANDINGS WITH ENRICHED STATS ----------
+			// ---------- DRIVER STANDINGS ----------
 			VAR DriverStandings =
 			    CALCULATETABLE (
 			        SUMMARIZE (
-			            StandingsSnapshot,
-			            StandingsSnapshot[DriverId],
-			            StandingsSnapshot[ConstructorId],
-			            StandingsSnapshot[Position],
-			            StandingsSnapshot[Points],
-			            StandingsSnapshot[Wins]
+			            'Standings Snapshot',
+			            'Standings Snapshot'[DriverId],
+			            'Standings Snapshot'[ConstructorId],
+			            'Standings Snapshot'[Position],
+			            'Standings Snapshot'[Points],
+			            'Standings Snapshot'[Wins]
 			        ),
-			        StandingsSnapshot[Round] = LatestRound,
-			        ALL ( StandingsSnapshot )
+			        'Standings Snapshot'[Round] = LatestRound,
+			        ALL ( 'Standings Snapshot' )
 			    )
 			VAR DriverRows =
 			    ADDCOLUMNS (
 			        DriverStandings,
 			        "@Name",
-			            LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], StandingsSnapshot[DriverId] ),
+			            LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], 'Standings Snapshot'[DriverId] ),
 			        "@Code",
-			            LOOKUPVALUE ( Drivers[DriverCode], Drivers[DriverId], StandingsSnapshot[DriverId] ),
+			            LOOKUPVALUE ( Drivers[DriverCode], Drivers[DriverId], 'Standings Snapshot'[DriverId] ),
 			        "@Number",
-			            LOOKUPVALUE ( Drivers[DriverNumber], Drivers[DriverId], StandingsSnapshot[DriverId] ),
+			            LOOKUPVALUE ( Drivers[DriverNumber], Drivers[DriverId], 'Standings Snapshot'[DriverId] ),
 			        "@Nat",
-			            LOOKUPVALUE ( Drivers[DriverNationality], Drivers[DriverId], StandingsSnapshot[DriverId] ),
+			            LOOKUPVALUE ( Drivers[DriverNationality], Drivers[DriverId], 'Standings Snapshot'[DriverId] ),
 			        "@TeamName",
-			            LOOKUPVALUE ( Constructors[ConstructorName], Constructors[ConstructorId], StandingsSnapshot[ConstructorId] ),
+			            LOOKUPVALUE ( Constructors[ConstructorName], Constructors[ConstructorId], 'Standings Snapshot'[ConstructorId] ),
 			        "@Color",
-			            LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], StandingsSnapshot[ConstructorId] ),
+			            LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], 'Standings Snapshot'[ConstructorId] ),
 			        "@Podiums",
-			            VAR DId = StandingsSnapshot[DriverId]
+			            VAR DId = 'Standings Snapshot'[DriverId]
 			            RETURN
 			                CALCULATE (
 			                    COUNTROWS ( Results ),
@@ -380,21 +372,21 @@ table _Measures
 			                    Results[Position] <= 3
 			                ),
 			        "@AvgFinish",
-			            VAR DId = StandingsSnapshot[DriverId]
+			            VAR DId = 'Standings Snapshot'[DriverId]
 			            RETURN
 			                CALCULATE (
 			                    AVERAGEX ( FILTER ( Results, NOT ISBLANK ( Results[Position] ) ), Results[Position] ),
 			                    Results[DriverId] = DId
 			                ),
 			        "@AvgGrid",
-			            VAR DId = StandingsSnapshot[DriverId]
+			            VAR DId = 'Standings Snapshot'[DriverId]
 			            RETURN
 			                CALCULATE (
 			                    AVERAGE ( Results[Grid] ),
 			                    Results[DriverId] = DId
 			                ),
 			        "@DNFs",
-			            VAR DId = StandingsSnapshot[DriverId]
+			            VAR DId = 'Standings Snapshot'[DriverId]
 			            RETURN
 			                CALCULATE (
 			                    COUNTROWS ( Results ),
@@ -403,7 +395,7 @@ table _Measures
 			                    NOT ( CONTAINSSTRING ( Results[Status], "Lap" ) )
 			                ),
 			        "@FLs",
-			            VAR DId = StandingsSnapshot[DriverId]
+			            VAR DId = 'Standings Snapshot'[DriverId]
 			            RETURN
 			                CALCULATE (
 			                    COUNTROWS ( Results ),
@@ -414,22 +406,21 @@ table _Measures
 			VAR DriverRowsHTML =
 			    CONCATENATEX (
 			        DriverRows,
-			        VAR DelayMs = StandingsSnapshot[Position] * 40
-			        VAR GapTxt = IF ( StandingsSnapshot[Position] = 1, "LEADER",
-			                "-" & FORMAT ( LeaderPoints - StandingsSnapshot[Points], "0" ) )
+			        VAR DelayMs = 'Standings Snapshot'[Position] * 40
+			        VAR GapTxt = IF ( 'Standings Snapshot'[Position] = 1, "LEADER",
+			                "-" & FORMAT ( LeaderPoints - 'Standings Snapshot'[Points], "0" ) )
 			        RETURN
 			        "<div class='row' style='border-left:4px solid " & [@Color]
 			            & ";animation-delay:" & DelayMs & "ms'>"
-			            & "<div class='pos'>" & StandingsSnapshot[Position] & "</div>"
+			            & "<div class='pos'>" & 'Standings Snapshot'[Position] & "</div>"
 			            & "<div class='code'>" & IF ( ISBLANK ( [@Code] ), "—", [@Code] ) & "</div>"
 			            & "<div class='dname'>"
 			                & "<div class='dname-main'>" & [@Name] & "</div>"
 			                & "<div class='dname-sub'>" & [@TeamName] & "</div>"
 			            & "</div>"
-			            & "<div class='wins'>" & StandingsSnapshot[Wins] & "W</div>"
-			            & "<div class='pts'>" & FORMAT ( StandingsSnapshot[Points], "0" ) & "</div>"
+			            & "<div class='wins'>" & 'Standings Snapshot'[Wins] & "W</div>"
+			            & "<div class='pts'>" & FORMAT ( 'Standings Snapshot'[Points], "0" ) & "</div>"
 			            & "<div class='gap'>" & GapTxt & "</div>"
-			            // TOOLTIP CARD
 			            & "<div class='tooltip' style='border-top:3px solid " & [@Color] & "'>"
 			                & "<div class='tt-head'>"
 			                    & "<div class='tt-num' style='background:" & [@Color] & "'>" & IF ( ISBLANK ( [@Number] ), "—", [@Number] ) & "</div>"
@@ -439,44 +430,35 @@ table _Measures
 			                    & "</div>"
 			                & "</div>"
 			                & "<div class='tt-grid'>"
-			                    & "<div class='tt-stat'><div class='tt-v'>" & StandingsSnapshot[Wins] & "</div><div class='tt-l'>Wins</div></div>"
+			                    & "<div class='tt-stat'><div class='tt-v'>" & 'Standings Snapshot'[Wins] & "</div><div class='tt-l'>Wins</div></div>"
 			                    & "<div class='tt-stat'><div class='tt-v'>" & [@Podiums] & "</div><div class='tt-l'>Podiums</div></div>"
 			                    & "<div class='tt-stat'><div class='tt-v'>" & [@FLs] & "</div><div class='tt-l'>Fastest Laps</div></div>"
 			                    & "<div class='tt-stat'><div class='tt-v'>" & FORMAT ( [@AvgFinish], "0.0" ) & "</div><div class='tt-l'>Avg Finish</div></div>"
 			                    & "<div class='tt-stat'><div class='tt-v'>" & FORMAT ( [@AvgGrid], "0.0" ) & "</div><div class='tt-l'>Avg Grid</div></div>"
 			                    & "<div class='tt-stat'><div class='tt-v'>" & [@DNFs] & "</div><div class='tt-l'>DNFs</div></div>"
 			                & "</div>"
-			                & "<div class='tt-foot'>" & UPPER ( IF ( ISBLANK ( [@Nat] ), "—", [@Nat] ) ) & " · " & FORMAT ( StandingsSnapshot[Points], "0" ) & " PTS</div>"
+			                & "<div class='tt-foot'>" & UPPER ( IF ( ISBLANK ( [@Nat] ), "—", [@Nat] ) ) & " · " & FORMAT ( 'Standings Snapshot'[Points], "0" ) & " PTS</div>"
 			            & "</div>"
 			        & "</div>",
 			        "",
-			        StandingsSnapshot[Position], ASC
+			        'Standings Snapshot'[Position], ASC
 			    )
 			
-			// ---------- CONSTRUCTOR STANDINGS ----------
+			// ---------- CONSTRUCTORS ----------
 			VAR ConstructorTotals =
 			    ADDCOLUMNS (
 			        VALUES ( Constructors[ConstructorId] ),
-			        "@CName",
-			            CALCULATE ( MAX ( Constructors[ConstructorName] ) ),
-			        "@CColor",
-			            CALCULATE ( MAX ( Constructors[TeamColor] ) ),
+			        "@CName", CALCULATE ( MAX ( Constructors[ConstructorName] ) ),
+			        "@CColor", CALCULATE ( MAX ( Constructors[TeamColor] ) ),
 			        "@CPoints",
 			            CALCULATE (
 			                SUM ( Results[Points] ),
-			                ALLEXCEPT ( Constructors, Constructors[ConstructorId] )
-			            ),
-			        "@CWins",
-			            CALCULATE (
-			                COUNTROWS ( Results ),
-			                Results[Position] = 1,
 			                ALLEXCEPT ( Constructors, Constructors[ConstructorId] )
 			            )
 			    )
 			VAR ConstructorFiltered =
 			    FILTER ( ConstructorTotals, NOT ISBLANK ( [@CPoints] ) && [@CPoints] > 0 )
-			VAR MaxConstructorPoints =
-			    MAXX ( ConstructorFiltered, [@CPoints] )
+			VAR MaxConstructorPoints = MAXX ( ConstructorFiltered, [@CPoints] )
 			VAR ConstructorRowsHTML =
 			    CONCATENATEX (
 			        ConstructorFiltered,
@@ -487,7 +469,7 @@ table _Measures
 			            "<div class='crow' style='animation-delay:" & DelayMs & "ms'>"
 			                & "<div class='cname'>" & [@CName] & "</div>"
 			                & "<div class='cbar-wrap'>"
-			                    & "<div class='cbar' style='--target-w:" & FORMAT ( BarPct, "0.0" )
+			                    & "<div class='cbar' style='width:" & FORMAT ( BarPct, "0.0" )
 			                        & "%;background:" & [@CColor]
 			                        & ";animation-delay:" & ( DelayMs + 200 ) & "ms;'></div>"
 			                & "</div>"
@@ -496,6 +478,83 @@ table _Measures
 			        "",
 			        [@CPoints], DESC
 			    )
+			
+			// ---------- CALENDAR MAP ----------
+			// Map dimensions and projection
+			VAR MapW = 460
+			VAR MapH = 230
+			VAR MapPad = 10
+			// Equirectangular projection: lat/long → x/y
+			// x = (lng + 180) / 360 * (MapW - 2*MapPad) + MapPad
+			// y = (90 - lat) / 180 * (MapH - 2*MapPad) + MapPad
+			
+			VAR AllRaces =
+			    CALCULATETABLE (
+			        SUMMARIZE (
+			            Races,
+			            Races[Round],
+			            Races[RaceName],
+			            Races[Country],
+			            Races[Date],
+			            Races[Lat],
+			            Races[Long]
+			        ),
+			        ALL ( Races )
+			    )
+			VAR RacesEnriched =
+			    ADDCOLUMNS (
+			        AllRaces,
+			        "@Status",
+			            SWITCH (
+			                TRUE (),
+			                Races[Round] = LatestRound, "current",
+			                Races[Round] < LatestRound, "done",
+			                "upcoming"
+			            ),
+			        "@CX",
+			            ( Races[Long] + 180 ) / 360 * ( MapW - 2 * MapPad ) + MapPad,
+			        "@CY",
+			            ( 90 - Races[Lat] ) / 180 * ( MapH - 2 * MapPad ) + MapPad
+			    )
+			
+			VAR CompletedCount =
+			    COUNTROWS ( FILTER ( RacesEnriched, [@Status] = "done" ) )
+			VAR UpcomingCount =
+			    COUNTROWS ( FILTER ( RacesEnriched, [@Status] = "upcoming" ) )
+			
+			VAR CircuitPinsSvg =
+			    CONCATENATEX (
+			        RacesEnriched,
+			        VAR State = [@Status]
+			        VAR PinClass = "pin pin-" & State
+			        VAR Cx = FORMAT ( [@CX], "0.00" )
+			        VAR Cy = FORMAT ( [@CY], "0.00" )
+			        VAR Radius = IF ( State = "current", "5", "3.5" )
+			        RETURN
+			            "<g class='" & PinClass & "'>"
+			                & "<circle cx='" & Cx & "' cy='" & Cy & "' r='" & Radius & "' />"
+			                & IF ( State = "current",
+			                    "<circle class='pulse-ring' cx='" & Cx & "' cy='" & Cy & "' r='5' />",
+			                    ""
+			                )
+			            & "</g>",
+			        ""
+			    )
+			
+			// World map continents (simplified silhouettes, ~equirectangular projection-friendly)
+			VAR WorldMapPaths =
+			    "<path d='M155,55 Q145,50 138,60 L130,72 Q125,80 130,88 L138,95 L150,92 L165,90 L172,80 Q175,68 170,60 Z' />"     // North America
+			    & "<path d='M178,100 L185,115 L188,135 L182,150 L172,158 L168,148 L170,135 L175,120 Z' />"                          // South America
+			    & "<path d='M218,55 L228,50 L240,55 L248,62 L255,70 L250,80 L240,85 L228,80 L220,75 Z' />"                          // Europe
+			    & "<path d='M225,85 L240,90 L260,95 L275,105 L285,120 L280,140 L268,150 L255,148 L240,138 L228,120 L222,105 Z' />"  // Africa
+			    & "<path d='M260,60 L280,55 L305,58 L325,65 L345,72 L355,82 L350,95 L335,100 L315,98 L290,92 L270,85 Z' />"        // Asia
+			    & "<path d='M340,140 L355,138 L370,145 L375,158 L365,165 L350,162 L342,152 Z' />"                                  // Australia
+			
+			VAR CalendarMapSvg =
+			    "<svg viewBox='0 0 " & MapW & " " & MapH & "' xmlns='http://www.w3.org/2000/svg' class='cal-map'>"
+			        & "<g class='continents'>" & WorldMapPaths & "</g>"
+			        & CircuitPinsSvg
+			    & "</svg>"
 			
 			// ---------- RECENT RACES ----------
 			VAR RecentRaces =
@@ -507,14 +566,11 @@ table _Measures
 			    CONCATENATEX (
 			        RecentRaces,
 			        VAR R = Races[Round]
-			        VAR P1 =
-			            CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 1 )
-			        VAR P1Team =
-			            CALCULATE ( MAX ( Constructors[TeamColor] ), Results[Round] = R, Results[Position] = 1 )
-			        VAR P2 =
-			            CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 2 )
-			        VAR P3 =
-			            CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 3 )
+			        VAR P1 = CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 1 )
+			        VAR P1ConId = CALCULATE ( MAX ( Results[ConstructorId] ), Results[Round] = R, Results[Position] = 1 )
+			        VAR P1Team = LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], P1ConId )
+			        VAR P2 = CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 2 )
+			        VAR P3 = CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 3 )
 			        VAR Idx = LatestRound - R
 			        VAR DelayMs = Idx * 120
 			        RETURN
@@ -529,14 +585,8 @@ table _Measures
 			                            & "<span class='pn pn1'>1</span>"
 			                            & "<span class='pname'>" & P1 & "</span>"
 			                        & "</div>"
-			                        & "<div class='pp pp2'>"
-			                            & "<span class='pn pn2'>2</span>"
-			                            & "<span class='pname'>" & IF ( ISBLANK ( P2 ), "—", P2 ) & "</span>"
-			                        & "</div>"
-			                        & "<div class='pp pp3'>"
-			                            & "<span class='pn pn3'>3</span>"
-			                            & "<span class='pname'>" & IF ( ISBLANK ( P3 ), "—", P3 ) & "</span>"
-			                        & "</div>"
+			                        & "<div class='pp pp2'><span class='pn pn2'>2</span><span class='pname'>" & IF ( ISBLANK ( P2 ), "—", P2 ) & "</span></div>"
+			                        & "<div class='pp pp3'><span class='pn pn3'>3</span><span class='pname'>" & IF ( ISBLANK ( P3 ), "—", P3 ) & "</span></div>"
 			                    & "</div>"
 			                & "</div>",
 			                ""
@@ -549,39 +599,33 @@ table _Measures
 			RETURN
 			"<style>"
 			& ".dash *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}"
-			& ".dash{display:grid;grid-template-columns:repeat(12,1fr);grid-gap:14px;padding:18px;background:#0a0a0d;min-height:100vh;color:#ffffff;position:relative;overflow:hidden}"
+			& ".dash{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:auto auto auto auto auto;grid-gap:14px;padding:18px;background:#0a0a0d;min-height:100vh;color:#ffffff;position:relative;overflow:hidden}"
 			
-			// ANIMATION KEYFRAMES
+			// ANIMATIONS
 			& "@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}"
 			& "@keyframes fadeInLeft{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}"
-			& "@keyframes fadeIn{from{opacity:0}to{opacity:1}}"
-			& "@keyframes barGrow{from{width:0}to{width:var(--target-w)}}"
 			& "@keyframes f1pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}"
 			& "@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}"
 			& "@keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,24,1,0.4)}50%{box-shadow:0 0 0 8px rgba(255,24,1,0)}}"
+			& "@keyframes pinPulse{0%{r:5;opacity:0.8}100%{r:14;opacity:0}}"
+			& "@keyframes pinDrop{from{opacity:0;transform:translateY(-8px) scale(0.5)}to{opacity:1;transform:translateY(0) scale(1)}}"
 			
 			// HEADER
 			& ".dash .header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:6px 4px 14px;border-bottom:1px solid #2a2a30;animation:fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) backwards}"
 			& ".dash .title{display:flex;align-items:center;gap:14px;color:#ffffff}"
-			& ".dash .title .bar{width:5px;height:32px;background:#FF1801;border-radius:2px;display:inline-block;animation:fadeInLeft 0.5s ease-out}"
+			& ".dash .title .bar{width:5px;height:32px;background:#FF1801;border-radius:2px;display:inline-block}"
 			& ".dash .title h1{font-size:22px;font-weight:800;letter-spacing:0.05em;color:#ffffff;margin:0}"
 			& ".dash .title h1 .red{color:#FF1801}"
 			& ".dash .roundbox{text-align:right;font-size:11px;color:#aaaaaa;letter-spacing:0.1em;text-transform:uppercase}"
 			& ".dash .roundbox .big{font-size:18px;color:#ffffff;font-weight:700;letter-spacing:0.02em;margin-top:2px}"
 			& ".dash .live-dot{display:inline-block;width:6px;height:6px;background:#FF1801;border-radius:50%;margin-right:6px;animation:glowPulse 2s infinite}"
 			
-			// KPIs
+			// KPI
 			& ".dash .kpi{background:linear-gradient(135deg,#1a1a1f,#15151a);border:1px solid #2a2a30;border-radius:8px;padding:16px 18px;position:relative;overflow:hidden;color:#ffffff;animation:fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) backwards;transition:transform 0.2s,border-color 0.2s}"
 			& ".dash .kpi:hover{transform:translateY(-2px);border-color:#3a3a45}"
-			& ".dash .kpi.k1{animation-delay:0.05s}"
-			& ".dash .kpi.k2{animation-delay:0.1s}"
-			& ".dash .kpi.k3{animation-delay:0.15s}"
-			& ".dash .kpi.k4{animation-delay:0.2s}"
+			& ".dash .kpi.k1{animation-delay:0.05s}.dash .kpi.k2{animation-delay:0.1s}.dash .kpi.k3{animation-delay:0.15s}.dash .kpi.k4{animation-delay:0.2s}"
 			& ".dash .kpi .accent-bar{position:absolute;left:0;top:0;width:4px;height:100%}"
-			& ".dash .kpi.k1 .accent-bar{background:#FF1801}"
-			& ".dash .kpi.k2 .accent-bar{background:#FFCC00}"
-			& ".dash .kpi.k3 .accent-bar{background:#27F4D2}"
-			& ".dash .kpi.k4 .accent-bar{background:#3671C6}"
+			& ".dash .kpi.k1 .accent-bar{background:#FF1801}.dash .kpi.k2 .accent-bar{background:#FFCC00}.dash .kpi.k3 .accent-bar{background:#27F4D2}.dash .kpi.k4 .accent-bar{background:#3671C6}"
 			& ".dash .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);animation:shimmer 3s infinite;animation-delay:1s}"
 			& ".dash .kpi .label{font-size:10px;color:#aaaaaa;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;font-weight:600}"
 			& ".dash .kpi .value{font-size:24px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;color:#ffffff}"
@@ -589,9 +633,7 @@ table _Measures
 			
 			// PANELS
 			& ".dash .panel{background:#15151a;border:1px solid #2a2a30;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;color:#ffffff;animation:fadeInUp 0.7s cubic-bezier(0.16,1,0.3,1) backwards}"
-			& ".dash .panel.p1{animation-delay:0.25s}"
-			& ".dash .panel.p2{animation-delay:0.3s}"
-			& ".dash .panel.p3{animation-delay:0.35s}"
+			& ".dash .panel.p1{animation-delay:0.25s}.dash .panel.p2{animation-delay:0.3s}.dash .panel.p3{animation-delay:0.35s}.dash .panel.p4{animation-delay:0.4s}"
 			& ".dash .panel-head{padding:12px 16px;border-bottom:1px solid #2a2a30;display:flex;justify-content:space-between;align-items:center;background:#1a1a1f}"
 			& ".dash .panel-head h2{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#cccccc;font-weight:700;margin:0;display:flex;align-items:center}"
 			& ".dash .panel-head .accent-dot{width:8px;height:8px;background:#FF1801;border-radius:50%;display:inline-block;margin-right:8px;animation:f1pulse 2s infinite}"
@@ -600,7 +642,7 @@ table _Measures
 			
 			// STANDINGS
 			& ".dash .standings{display:flex;flex-direction:column}"
-			& ".dash .row{display:grid;grid-template-columns:36px 50px 1fr 50px 70px 70px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1f1f24;transition:background 0.2s,transform 0.2s,padding 0.2s;color:#ffffff;position:relative;cursor:default;animation:fadeInLeft 0.4s ease-out backwards}"
+			& ".dash .row{display:grid;grid-template-columns:36px 50px 1fr 50px 70px 70px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1f1f24;transition:background 0.2s,transform 0.2s;color:#ffffff;position:relative;cursor:default;animation:fadeInLeft 0.4s ease-out backwards}"
 			& ".dash .row:hover{background:#1f1f24;transform:translateX(2px)}"
 			& ".dash .row .pos{font-weight:800;font-size:18px;color:#ffffff;text-align:center;font-variant-numeric:tabular-nums}"
 			& ".dash .row .code{font-family:'JetBrains Mono','Consolas',monospace;font-size:11px;color:#cccccc;letter-spacing:0.05em;background:#0a0a0d;padding:3px 6px;border-radius:3px;text-align:center}"
@@ -630,9 +672,25 @@ table _Measures
 			& ".dash .crow{display:grid;grid-template-columns:120px 1fr 70px;align-items:center;gap:12px;animation:fadeInLeft 0.5s ease-out backwards}"
 			& ".dash .crow .cname{font-size:12px;font-weight:600;color:#ffffff}"
 			& ".dash .crow .cbar-wrap{height:22px;background:#0a0a0d;border-radius:3px;overflow:hidden;position:relative}"
-			& ".dash .crow .cbar{height:100%;border-radius:3px;width:0;animation:barGrow 0.9s cubic-bezier(0.16,1,0.3,1) forwards;position:relative;overflow:hidden}"
-			& ".dash .crow .cbar::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);animation:shimmer 2.5s infinite;animation-delay:1.2s}"
+			& ".dash .crow .cbar{height:100%;border-radius:3px;position:relative;overflow:hidden}"
 			& ".dash .crow .cpts{font-size:14px;font-weight:800;text-align:right;color:#ffffff;font-variant-numeric:tabular-nums}"
+			
+			// CALENDAR MAP
+			& ".dash .map-body{padding:16px;display:flex;flex-direction:column;gap:12px}"
+			& ".dash .cal-map{width:100%;height:auto;display:block;background:#0a0a0d;border-radius:4px}"
+			& ".dash .cal-map .continents path{fill:#1f1f24;stroke:#2a2a30;stroke-width:0.5}"
+			& ".dash .cal-map .pin{animation:pinDrop 0.5s ease-out backwards;animation-delay:0.5s;cursor:pointer;transition:transform 0.2s;transform-origin:center;transform-box:fill-box}"
+			& ".dash .cal-map .pin:hover{transform:scale(1.6)}"
+			& ".dash .cal-map .pin-done circle{fill:#22C55E;stroke:#0a0a0d;stroke-width:1}"
+			& ".dash .cal-map .pin-upcoming circle{fill:#666666;stroke:#0a0a0d;stroke-width:1;opacity:0.7}"
+			& ".dash .cal-map .pin-current circle{fill:#FF1801;stroke:#ffffff;stroke-width:1.5}"
+			& ".dash .cal-map .pulse-ring{fill:none;stroke:#FF1801;stroke-width:2;animation:pinPulse 1.8s infinite}"
+			& ".dash .map-legend{display:flex;justify-content:center;gap:18px;font-size:10px;color:#aaaaaa;letter-spacing:0.05em;text-transform:uppercase}"
+			& ".dash .legend-item{display:flex;align-items:center;gap:6px}"
+			& ".dash .legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}"
+			& ".dash .ld-done{background:#22C55E}"
+			& ".dash .ld-current{background:#FF1801}"
+			& ".dash .ld-upcoming{background:#666666}"
 			
 			// RECENT
 			& ".dash .recent{padding:14px 16px;display:flex;flex-direction:column;gap:14px}"
@@ -649,16 +707,14 @@ table _Measures
 			& ".dash .pp3{background:rgba(205,127,50,0.08)}"
 			& ".dash .pname{color:#ffffff;font-weight:500}"
 			& ".dash .pn{font-weight:800;font-size:11px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}"
-			& ".dash .pn1{background:#FFCC00;color:#000000}"
-			& ".dash .pn2{background:#C0C0C0;color:#000000}"
-			& ".dash .pn3{background:#CD7F32;color:#ffffff}"
+			& ".dash .pn1{background:#FFCC00;color:#000000}.dash .pn2{background:#C0C0C0;color:#000000}.dash .pn3{background:#CD7F32;color:#ffffff}"
 			
 			& ".dash .empty{padding:40px;text-align:center;color:#888888;font-size:13px}"
 			& "</style>"
 			
 			& "<div class='dash'>"
 			
-			// HEADER
+			// HEADER (row 1)
 			& "<div class='header'>"
 			    & "<div class='title'>"
 			        & "<span class='bar'></span>"
@@ -670,38 +726,35 @@ table _Measures
 			    & "</div>"
 			& "</div>"
 			
-			// KPIs
-			& "<div class='kpi k1' style='grid-column:1/4'>"
+			// KPIs (row 2)
+			& "<div class='kpi k1' style='grid-column:1/4;grid-row:2'>"
 			    & "<span class='accent-bar'></span>"
 			    & "<div class='label'>Championship Leader</div>"
 			    & "<div class='value'>" & IF ( ISBLANK ( LeaderName ), "—", LeaderName ) & "</div>"
 			    & "<div class='sub'>" & FORMAT ( LeaderPoints, "0" ) & " points</div>"
 			& "</div>"
-			
-			& "<div class='kpi k2' style='grid-column:4/7'>"
+			& "<div class='kpi k2' style='grid-column:4/7;grid-row:2'>"
 			    & "<span class='accent-bar'></span>"
 			    & "<div class='label'>Lead over P2</div>"
 			    & "<div class='value'>+" & FORMAT ( P1P2Gap, "0" ) & "</div>"
 			    & "<div class='sub'>points</div>"
 			& "</div>"
-			
-			& "<div class='kpi k3' style='grid-column:7/10'>"
+			& "<div class='kpi k3' style='grid-column:7/10;grid-row:2'>"
 			    & "<span class='accent-bar'></span>"
 			    & "<div class='label'>Races Remaining</div>"
 			    & "<div class='value'>" & RacesRem & "</div>"
 			    & "<div class='sub'>of " & TotalRounds & " round season</div>"
 			& "</div>"
-			
-			& "<div class='kpi k4' style='grid-column:10/13'>"
+			& "<div class='kpi k4' style='grid-column:10/13;grid-row:2'>"
 			    & "<span class='accent-bar'></span>"
 			    & "<div class='label'>Last Race</div>"
 			    & "<div class='value' style='font-size:18px'>" & IF ( ISBLANK ( LatestRaceName ), "Season not started", LatestRaceName ) & "</div>"
 			    & "<div class='sub'>" & UPPER ( IF ( ISBLANK ( LatestCountry ), "—", LatestCountry ) ) & "</div>"
 			& "</div>"
 			
-			// DRIVER STANDINGS
-			& "<div class='panel p1' style='grid-column:1/8;grid-row:3/5'>"
-			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Driver Standings</h2><span class='meta'>HOVER A ROW FOR DETAILS</span></div>"
+			// DRIVER STANDINGS (rows 3-5, left)
+			& "<div class='panel p1' style='grid-column:1/8;grid-row:3/6'>"
+			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Driver Standings</h2><span class='meta'>HOVER FOR DETAILS</span></div>"
 			    & "<div class='panel-body standings'>"
 			        & IF ( ISBLANK ( DriverRowsHTML ),
 			            "<div class='empty'>No race data yet for the 2026 season.</div>",
@@ -709,8 +762,8 @@ table _Measures
 			    & "</div>"
 			& "</div>"
 			
-			// CONSTRUCTORS
-			& "<div class='panel p2' style='grid-column:8/13;grid-row:3/4'>"
+			// CONSTRUCTORS (row 3, right)
+			& "<div class='panel p2' style='grid-column:8/13;grid-row:3'>"
 			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Constructors Championship</h2></div>"
 			    & "<div class='panel-body constructors'>"
 			        & IF ( ISBLANK ( ConstructorRowsHTML ),
@@ -719,8 +772,24 @@ table _Measures
 			    & "</div>"
 			& "</div>"
 			
-			// RECENT
-			& "<div class='panel p3' style='grid-column:8/13;grid-row:4/5'>"
+			// CALENDAR MAP (row 4, right)
+			& "<div class='panel p3' style='grid-column:8/13;grid-row:4'>"
+			    & "<div class='panel-head'>"
+			        & "<h2><span class='accent-dot'></span>Season Calendar</h2>"
+			        & "<span class='meta'>" & CompletedCount & " DONE · " & UpcomingCount & " UPCOMING</span>"
+			    & "</div>"
+			    & "<div class='map-body'>"
+			        & CalendarMapSvg
+			        & "<div class='map-legend'>"
+			            & "<div class='legend-item'><span class='legend-dot ld-done'></span>Completed</div>"
+			            & "<div class='legend-item'><span class='legend-dot ld-current'></span>Latest</div>"
+			            & "<div class='legend-item'><span class='legend-dot ld-upcoming'></span>Upcoming</div>"
+			        & "</div>"
+			    & "</div>"
+			& "</div>"
+			
+			// RECENT (row 5, right)
+			& "<div class='panel p4' style='grid-column:8/13;grid-row:5'>"
 			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Recent Race Winners</h2></div>"
 			    & "<div class='panel-body recent'>"
 			        & IF ( ISBLANK ( RecentRowsHTML ),
@@ -1166,6 +1235,380 @@ table _Measures
 			
 			& "</div>"
 		lineageTag: 25a720c9-9a08-44ee-979d-79f3302d8561
+
+	measure 'Race Analysis HTML' =
+			
+			
+			// ---------- SELECTED RACE ----------
+			VAR SelRound = SELECTEDVALUE ( Races[Round] )
+			VAR EffectiveRound =
+			    IF (
+			        ISBLANK ( SelRound ),
+			        CALCULATE ( MAX ( Results[Round] ), ALL ( Races ) ),
+			        SelRound
+			    )
+			VAR EffectiveRaceName =
+			    CALCULATE ( MAX ( Races[RaceName] ), Races[Round] = EffectiveRound, ALL ( Races ) )
+			VAR EffectiveCountry =
+			    CALCULATE ( MAX ( Races[Country] ), Races[Round] = EffectiveRound, ALL ( Races ) )
+			
+			// ---------- DATA SCOPE ----------
+			VAR LapData =
+			    CALCULATETABLE (
+			        SUMMARIZE (
+			            'Lap Positions',
+			            'Lap Positions'[DriverId],
+			            'Lap Positions'[Lap],
+			            'Lap Positions'[Position]
+			        ),
+			        'Lap Positions'[Round] = EffectiveRound,
+			        ALL ( Races )
+			    )
+			VAR TotalLaps = MAXX ( LapData, 'Lap Positions'[Lap] )
+			VAR DriversInRace =
+			    CALCULATETABLE (
+			        VALUES ( 'Lap Positions'[DriverId] ),
+			        'Lap Positions'[Round] = EffectiveRound,
+			        ALL ( Races )
+			    )
+			
+			// ---------- SVG GEOMETRY ----------
+			VAR ChartW = 1100
+			VAR ChartH = 480
+			VAR PadL = 40
+			VAR PadR = 200
+			VAR PadT = 20
+			VAR PadB = 30
+			VAR PlotW = ChartW - PadL - PadR
+			VAR PlotH = ChartH - PadT - PadB
+			VAR XStep = DIVIDE ( PlotW, TotalLaps - 1, 0 )
+			VAR YStep = DIVIDE ( PlotH, 19, 0 )
+			
+			// ---------- BUILD POLYLINES (one per driver) ----------
+			VAR DriverInfo =
+			    ADDCOLUMNS (
+			        DriversInRace,
+			        "@FinalPos",
+			            VAR ThisDriver = 'Lap Positions'[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    MAX ( Results[Position] ),
+			                    Results[Round] = EffectiveRound,
+			                    Results[DriverId] = ThisDriver,
+			                    ALL ( Races )
+			                ),
+			        "@Code",
+			            LOOKUPVALUE ( Drivers[DriverCode], Drivers[DriverId], 'Lap Positions'[DriverId] ),
+			        "@Name",
+			            LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], 'Lap Positions'[DriverId] ),
+			        "@Color",
+			            VAR ThisDriver = 'Lap Positions'[DriverId]
+			            VAR ConId =
+			                CALCULATE (
+			                    MAX ( Results[ConstructorId] ),
+			                    Results[Round] = EffectiveRound,
+			                    Results[DriverId] = ThisDriver,
+			                    ALL ( Races )
+			                )
+			            RETURN
+			                CALCULATE (
+			                    MAX ( Constructors[TeamColor] ),
+			                    Constructors[ConstructorId] = ConId,
+			                    ALL ( Constructors )
+			                )
+			    )
+			VAR DriverEnriched = DriverInfo
+			VAR DriverPolylines =
+			    ADDCOLUMNS (
+			        DriverEnriched,
+			        "@Points",
+			            VAR ThisDriver = 'Lap Positions'[DriverId]
+			            VAR DriverLaps =
+			                CALCULATETABLE (
+			                    SUMMARIZE ( 'Lap Positions', 'Lap Positions'[Lap], 'Lap Positions'[Position] ),
+			                    'Lap Positions'[Round] = EffectiveRound,
+			                    'Lap Positions'[DriverId] = ThisDriver,
+			                    ALL ( Races )
+			                )
+			            RETURN
+			                CONCATENATEX (
+			                    DriverLaps,
+			                    VAR X = PadL + ( 'Lap Positions'[Lap] - 1 ) * XStep
+			                    VAR Y = PadT + ( 'Lap Positions'[Position] - 1 ) * YStep
+			                    RETURN FORMAT ( X, "0.0" ) & "," & FORMAT ( Y, "0.0" ),
+			                    " ",
+			                    'Lap Positions'[Lap], ASC
+			                ),
+			        "@FinalY",
+			            PadT + ( [@FinalPos] - 1 ) * YStep
+			    )
+			
+			// ---------- BUILD SVG ELEMENTS ----------
+			VAR PolylinesSvg =
+			    CONCATENATEX (
+			        DriverPolylines,
+			        VAR ThisDriver = 'Lap Positions'[DriverId]
+			        VAR ThisConId =
+			            CALCULATE (
+			                MAX ( Results[ConstructorId] ),
+			                Results[Round] = EffectiveRound,
+			                Results[DriverId] = ThisDriver,
+			                ALL ( Races )
+			            )
+			        VAR ThisColor =
+			            CALCULATE (
+			                MAX ( Constructors[TeamColor] ),
+			                Constructors[ConstructorId] = ThisConId,
+			                ALL ( Constructors )
+			            )
+			        VAR SafeColor = IF ( ISBLANK ( ThisColor ), "#888", ThisColor )
+			        // End cap geometry — last lap and position the driver actually completed
+			        VAR LastLap =
+			            CALCULATE (
+			                MAX ( 'Lap Positions'[Lap] ),
+			                'Lap Positions'[Round] = EffectiveRound,
+			                'Lap Positions'[DriverId] = ThisDriver,
+			                ALL ( Races )
+			            )
+			        VAR LastPos =
+			            CALCULATE (
+			                MAX ( 'Lap Positions'[Position] ),
+			                'Lap Positions'[Round] = EffectiveRound,
+			                'Lap Positions'[DriverId] = ThisDriver,
+			                'Lap Positions'[Lap] = LastLap,
+			                ALL ( Races )
+			            )
+			        VAR EndX = PadL + ( LastLap - 1 ) * XStep
+			        VAR EndY = PadT + ( LastPos - 1 ) * YStep
+			        // Detect DNF — if last lap < total race laps, driver retired
+			        VAR IsDNF = LastLap < TotalLaps
+			        VAR LineDash = IF ( IsDNF, "stroke-dasharray:6,3;", "" )
+			        // Label X position — at end of driver's actual line, not at chart edge
+			        VAR LabelX = IF ( IsDNF, EndX + 6, PadL + PlotW + 6 )
+			        VAR LabelY = IF ( IsDNF, EndY + 4, PadT + ( [@FinalPos] - 1 ) * YStep + 4 )
+			        RETURN
+			            // Polyline (the lap-by-lap trace)
+			            "<polyline class='lap-line' data-driver='" & ThisDriver
+			                & "' points='" & [@Points] & "' "
+			                & "style='stroke:" & SafeColor & ";stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round;" & LineDash & "' />"
+			            // End cap circle at last position
+			            & "<circle class='lap-endcap' cx='" & FORMAT ( EndX, "0.0" )
+			                & "' cy='" & FORMAT ( EndY, "0.0" )
+			                & "' r='3.5' style='fill:" & SafeColor
+			                & ";stroke:#0a0a0d;stroke-width:1.5' />"
+			            // Driver label — for DNFs, label at retirement point; for finishers, at right edge
+			            & "<text class='lap-label' x='" & FORMAT ( LabelX, "0.0" )
+			                & "' y='" & FORMAT ( LabelY, "0.0" )
+			                & "' style='fill:" & SafeColor & "'>"
+			                & IF ( IsDNF, "DNF L" & LastLap & " " & [@Code], "P" & [@FinalPos] & " " & [@Code] )
+			                & "</text>",
+			        ""
+			    )
+			VAR YAxisSvg =
+			    "<line x1='" & PadL & "' y1='" & PadT & "' x2='" & PadL & "' y2='" & ( PadT + PlotH ) & "' stroke='#2a2a30' stroke-width='1' />"
+			    & CONCATENATEX (
+			        { 1, 5, 10, 15, 20 },
+			        VAR P = [Value]
+			        VAR Y = PadT + ( P - 1 ) * YStep
+			        RETURN
+			            "<line x1='" & PadL & "' y1='" & Y & "' x2='" & ( PadL + PlotW ) & "' y2='" & Y
+			            & "' stroke='#1f1f24' stroke-width='1' stroke-dasharray='2,4' />"
+			            & "<text x='" & ( PadL - 8 ) & "' y='" & ( Y + 4 ) & "' fill='#888' font-size='10' text-anchor='end'>P" & P & "</text>",
+			        ""
+			    )
+			
+			VAR XAxisLabelsList = GENERATESERIES ( 1, TotalLaps, 5 )
+			VAR XAxisSvg =
+			    "<line x1='" & PadL & "' y1='" & ( PadT + PlotH ) & "' x2='" & ( PadL + PlotW ) & "' y2='" & ( PadT + PlotH ) & "' stroke='#2a2a30' stroke-width='1' />"
+			    & CONCATENATEX (
+			        XAxisLabelsList,
+			        VAR L = [Value]
+			        VAR X = PadL + ( L - 1 ) * XStep
+			        RETURN
+			            "<text x='" & FORMAT ( X, "0.0" ) & "' y='" & ( PadT + PlotH + 16 ) & "' fill='#888' font-size='10' text-anchor='middle'>L" & L & "</text>",
+			        ""
+			    )
+			
+			// ---------- OVERTAKE COUNT ----------
+			VAR PositionChangeData =
+			    CALCULATETABLE (
+			        SUMMARIZE (
+			            'Lap Positions',
+			            'Lap Positions'[Lap],
+			            'Lap Positions'[DriverId],
+			            'Lap Positions'[Position]
+			        ),
+			        'Lap Positions'[Round] = EffectiveRound,
+			        ALL ( Races )
+			    )
+			VAR Overtakes =
+			    SUMX (
+			        FILTER ( PositionChangeData, 'Lap Positions'[Lap] > 1 ),
+			        VAR ThisLap = 'Lap Positions'[Lap]
+			        VAR ThisDriver = 'Lap Positions'[DriverId]
+			        VAR ThisPos = 'Lap Positions'[Position]
+			        VAR PrevPos =
+			            MAXX (
+			                FILTER (
+			                    PositionChangeData,
+			                    'Lap Positions'[Lap] = ThisLap - 1
+			                        && 'Lap Positions'[DriverId] = ThisDriver
+			                ),
+			                'Lap Positions'[Position]
+			            )
+			        RETURN IF ( NOT ISBLANK ( PrevPos ) && ThisPos < PrevPos, PrevPos - ThisPos, 0 )
+			    )
+			
+			// ---------- BIGGEST MOVER ----------
+			VAR MoverInfo =
+			    ADDCOLUMNS (
+			        DriversInRace,
+			        "@StartPos",
+			            VAR ThisDriver = 'Lap Positions'[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    MAX ( 'Lap Positions'[Position] ),
+			                    'Lap Positions'[Round] = EffectiveRound,
+			                    'Lap Positions'[Lap] = 1,
+			                    'Lap Positions'[DriverId] = ThisDriver,
+			                    ALL ( Races )
+			                ),
+			        "@FinalPos",
+			            VAR ThisDriver = 'Lap Positions'[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    MAX ( Results[Position] ),
+			                    Results[Round] = EffectiveRound,
+			                    Results[DriverId] = ThisDriver,
+			                    ALL ( Races )
+			                )
+			    )
+			VAR MoverWithDelta =
+			    ADDCOLUMNS (
+			        MoverInfo,
+			        "@Delta", IF ( NOT ISBLANK ( [@StartPos] ) && NOT ISBLANK ( [@FinalPos] ),
+			            [@StartPos] - [@FinalPos], BLANK () )
+			    )
+			VAR MaxDelta = MAXX ( MoverWithDelta, [@Delta] )
+			VAR BiggestMoverId =
+			    MAXX (
+			        FILTER ( MoverWithDelta, [@Delta] = MaxDelta && NOT ISBLANK ( MaxDelta ) ),
+			        'Lap Positions'[DriverId]
+			    )
+			VAR BiggestMoverName =
+			    LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], BiggestMoverId )
+			
+			// ---------- MOST LAPS LED ----------
+			VAR LapsLedData =
+			    ADDCOLUMNS (
+			        DriversInRace,
+			        "@LapsLed",
+			            VAR ThisDriver = 'Lap Positions'[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    COUNTROWS ( 'Lap Positions' ),
+			                    'Lap Positions'[Round] = EffectiveRound,
+			                    'Lap Positions'[Position] = 1,
+			                    'Lap Positions'[DriverId] = ThisDriver,
+			                    ALL ( Races )
+			                )
+			    )
+			VAR MaxLapsLed = MAXX ( LapsLedData, [@LapsLed] )
+			VAR LeaderId =
+			    MAXX (
+			        FILTER ( LapsLedData, [@LapsLed] = MaxLapsLed && NOT ISBLANK ( MaxLapsLed ) ),
+			        'Lap Positions'[DriverId]
+			    )
+			VAR LeaderName =
+			    LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], LeaderId )
+			
+			// ---------- ASSEMBLE ----------
+			RETURN
+			"<style>"
+			& ".radash *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}"
+			& ".radash{display:grid;grid-template-columns:repeat(12,1fr);grid-gap:14px;padding:18px;background:#0a0a0d;min-height:100vh;color:#ffffff}"
+			& "@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}"
+			& "@keyframes drawLine{from{stroke-dashoffset:3000}to{stroke-dashoffset:0}}"
+			& "@keyframes f1pulse{0%,100%{opacity:1}50%{opacity:0.4}}"
+			& ".radash .rahead{grid-column:1/-1;display:flex;align-items:center;padding:6px 4px 16px;border-bottom:1px solid #2a2a30;animation:fadeInUp 0.5s ease-out backwards}"
+			& ".radash .rh-left{display:flex;align-items:center;gap:14px}"
+			& ".radash .rh-bar{width:5px;height:48px;background:#FF1801;border-radius:2px}"
+			& ".radash .rh-titles .rh-rname{font-size:24px;font-weight:800;letter-spacing:-0.01em;color:#ffffff;line-height:1.1}"
+			& ".radash .rh-titles .rh-meta{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#aaaaaa;margin-top:6px;font-weight:600}"
+			& ".radash .chart-panel{grid-column:1/-1;background:#15151a;border:1px solid #2a2a30;border-radius:8px;overflow:hidden;animation:fadeInUp 0.6s ease-out backwards;animation-delay:0.1s}"
+			& ".radash .panel-head{padding:12px 16px;border-bottom:1px solid #2a2a30;display:flex;justify-content:space-between;align-items:center;background:#1a1a1f}"
+			& ".radash .panel-head h2{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#cccccc;font-weight:700;display:flex;align-items:center;margin:0}"
+			& ".radash .panel-head .accent-dot{width:8px;height:8px;background:#FF1801;border-radius:50%;display:inline-block;margin-right:8px;animation:f1pulse 2s infinite}"
+			& ".radash .panel-head .meta{font-size:10px;color:#888888}"
+			& ".radash .chart-body{padding:18px}"
+			& ".radash svg{width:100%;height:auto;display:block}"
+			& ".radash .lap-line{transition:opacity 0.2s,stroke-width 0.2s;stroke-dasharray:3000;stroke-dashoffset:3000;animation:drawLine 1.4s ease-out forwards;animation-delay:0.3s}"
+			& ".radash svg:hover .lap-line{opacity:0.18}"
+			& ".radash svg .lap-line:hover{opacity:1;stroke-width:3.5}"
+			& ".radash .lap-label{font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;opacity:0;animation:fadeInUp 0.4s ease-out forwards;animation-delay:1.6s}"
+			& ".radash .insights{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}"
+			& ".radash .ins{background:#15151a;border:1px solid #2a2a30;border-radius:8px;padding:18px;position:relative;overflow:hidden;animation:fadeInUp 0.6s ease-out backwards}"
+			& ".radash .ins.i1{animation-delay:0.4s}"
+			& ".radash .ins.i2{animation-delay:0.5s}"
+			& ".radash .ins.i3{animation-delay:0.6s}"
+			& ".radash .ins .accent{position:absolute;left:0;top:0;bottom:0;width:3px}"
+			& ".radash .ins .ilabel{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#888888;font-weight:700;margin-bottom:8px}"
+			& ".radash .ins .ivalue{font-size:28px;font-weight:800;color:#ffffff;line-height:1;font-variant-numeric:tabular-nums}"
+			& ".radash .ins .iname{font-size:14px;font-weight:600;color:#ffffff;line-height:1.2;margin-top:4px}"
+			& ".radash .ins .isub{font-size:11px;color:#aaaaaa;margin-top:6px}"
+			& ".radash .empty{padding:60px;text-align:center;color:#888888;font-size:13px}"
+			& "</style>"
+			& "<div class='radash'>"
+			& "<div class='rahead'>"
+			    & "<div class='rh-left'>"
+			        & "<div class='rh-bar'></div>"
+			        & "<div class='rh-titles'>"
+			            & "<div class='rh-rname'>" & IF ( ISBLANK ( EffectiveRaceName ), "Select a race", EffectiveRaceName ) & "</div>"
+			            & "<div class='rh-meta'>RACE ANALYSIS · ROUND " & EffectiveRound & " · " & UPPER ( IF ( ISBLANK ( EffectiveCountry ), "—", EffectiveCountry ) ) & "</div>"
+			        & "</div>"
+			    & "</div>"
+			& "</div>"
+			& "<div class='chart-panel'>"
+			    & "<div class='panel-head'>"
+			        & "<h2><span class='accent-dot'></span>Lap-by-Lap Position Chart</h2>"
+			        & "<span class='meta'>HOVER A LINE TO ISOLATE</span>"
+			    & "</div>"
+			    & "<div class='chart-body'>"
+			    & IF ( ISBLANK ( TotalLaps ),
+			        "<div class='empty'>No lap data available for this race.</div>",
+			        "<svg viewBox='0 0 " & ChartW & " " & ChartH & "' xmlns='http://www.w3.org/2000/svg'>"
+			            & YAxisSvg
+			            & XAxisSvg
+			            & PolylinesSvg
+			        & "</svg>"
+			    )
+			    & "</div>"
+			& "</div>"
+			& "<div class='insights'>"
+			    & "<div class='ins i1'>"
+			        & "<div class='accent' style='background:#FFCC00'></div>"
+			        & "<div class='ilabel'>Most Laps Led</div>"
+			        & "<div class='ivalue'>" & IF ( ISBLANK ( MaxLapsLed ), "—", MaxLapsLed ) & "</div>"
+			        & "<div class='iname'>" & IF ( ISBLANK ( LeaderName ), "—", LeaderName ) & "</div>"
+			        & "<div class='isub'>laps in the lead</div>"
+			    & "</div>"
+			    & "<div class='ins i2'>"
+			        & "<div class='accent' style='background:#22C55E'></div>"
+			        & "<div class='ilabel'>Biggest Mover</div>"
+			        & "<div class='ivalue'>+" & IF ( ISBLANK ( MaxDelta ), "—", MaxDelta ) & "</div>"
+			        & "<div class='iname'>" & IF ( ISBLANK ( BiggestMoverName ), "—", BiggestMoverName ) & "</div>"
+			        & "<div class='isub'>positions gained</div>"
+			    & "</div>"
+			    & "<div class='ins i3'>"
+			        & "<div class='accent' style='background:#FF1801'></div>"
+			        & "<div class='ilabel'>Position Changes</div>"
+			        & "<div class='ivalue'>" & Overtakes & "</div>"
+			        & "<div class='iname'>Total overtakes</div>"
+			        & "<div class='isub'>net forward moves across all drivers</div>"
+			    & "</div>"
+			& "</div>"
+			& "</div>"
+		lineageTag: 20a3a7e6-95a9-4df9-9de8-afbdee8eb3a5
 
 	column Column
 		dataType: string

@@ -33,10 +33,18 @@ relationship ea06bf75-93a5-d36a-dbf6-0abf86e674fc
 	toColumn: Races.Round
 
 relationship 55403351-0419-23f5-0804-d0d1467ad8d2
-	fromColumn: StandingsSnapshot.DriverId
+	fromColumn: 'Standings Snapshot'.DriverId
 	toColumn: Drivers.DriverId
 
 relationship d004736c-3c09-3ddd-5eaf-732a19bd5930
-	fromColumn: StandingsSnapshot.Round
+	fromColumn: 'Standings Snapshot'.Round
 	toColumn: Races.Round
+
+relationship AutoDetected_7cfaeda6-5221-479d-8b6f-9d13cc43931b
+	fromColumn: 'Lap Positions'.Round
+	toColumn: Races.Round
+
+relationship AutoDetected_30648828-304a-4f5e-baa4-cf866699ae26
+	fromColumn: 'Lap Positions'.DriverId
+	toColumn: Drivers.DriverId
 

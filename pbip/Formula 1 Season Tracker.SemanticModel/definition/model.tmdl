@@ -8,7 +8,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["Races","Results","Qualifying","CurrentRound","MaxRound","StandingsSnapshot","Drivers","Constructors","_Measures"]
+annotation PBI_QueryOrder = ["Races","Drivers","Constructors","Results","Qualifying","Lap Positions","Standings Snapshot","_Measures","CurrentRound","MaxRound","SelectedRound"]
 
 annotation PBI_ProTooling = ["DevMode","TMDLView_Desktop"]
 
@@ -18,10 +18,11 @@ ref table LocalDateTable_2d77bc9e-0fdc-466b-8f2a-9bea8fbb5677
 ref table Results
 ref table LocalDateTable_37b84902-a8eb-4dc2-abbb-dbbe643e9107
 ref table Qualifying
-ref table StandingsSnapshot
+ref table 'Standings Snapshot'
 ref table Drivers
 ref table Constructors
 ref table _Measures
+ref table 'Lap Positions'
 
 ref cultureInfo en-US
 
