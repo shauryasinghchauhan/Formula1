@@ -37,7 +37,7 @@ table Drivers
 		dataType: int64
 		formatString: 0
 		lineageTag: efd1cfa7-238d-4790-ae13-5d4588407cc6
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: DriverNumber
 
 		annotation SummarizationSetBy = Automatic

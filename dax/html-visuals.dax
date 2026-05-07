@@ -11,54 +11,62 @@
 // filter context internally so it always shows top 20.
 // Card-friendly width: ~480px minimum.
 // ---------------------------------------------------------------------
-Leaderboard HTML =
+Leaderboard HTML = 
 VAR LatestRound =
-    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( StandingsSnapshot ) )
 VAR LeaderPoints =
     CALCULATE (
         MAX ( StandingsSnapshot[Points] ),
         StandingsSnapshot[Round] = LatestRound,
         StandingsSnapshot[Position] = 1,
-        ALL ( Drivers )
+        ALL ( StandingsSnapshot )
     )
-VAR Rows =
+VAR SnapshotRows =
+    CALCULATETABLE (
+        SUMMARIZE (
+            StandingsSnapshot,
+            StandingsSnapshot[DriverId],
+            StandingsSnapshot[ConstructorId],
+            StandingsSnapshot[Position],
+            StandingsSnapshot[Points]
+        ),
+        StandingsSnapshot[Round] = LatestRound,
+        ALL ( StandingsSnapshot )
+    )
+VAR Enriched =
     ADDCOLUMNS (
-        FILTER (
-            ALL ( Drivers[DriverId], Drivers[DriverName] ),
-            CALCULATE (
-                MAX ( StandingsSnapshot[Round] ),
-                StandingsSnapshot[Round] = LatestRound
-            ) = LatestRound
-        ),
-        "@Pos", CALCULATE (
-            MAX ( StandingsSnapshot[Position] ),
-            StandingsSnapshot[Round] = LatestRound
-        ),
-        "@Pts", CALCULATE (
-            MAX ( StandingsSnapshot[Points] ),
-            StandingsSnapshot[Round] = LatestRound
-        ),
-        "@Color", CALCULATE ( MAX ( Constructors[TeamColor] ) )
+        SnapshotRows,
+        "@Name",
+            LOOKUPVALUE (
+                Drivers[DriverName],
+                Drivers[DriverId], StandingsSnapshot[DriverId]
+            ),
+        "@Color",
+            LOOKUPVALUE (
+                Constructors[TeamColor],
+                Constructors[ConstructorId], StandingsSnapshot[ConstructorId]
+            )
     )
 VAR Body =
     CONCATENATEX (
-        TOPN ( 20, Rows, [@Pos], ASC ),
+        Enriched,
         "<tr>"
             & "<td style='border-left:6px solid " & [@Color]
                 & ";padding:8px 12px;font-weight:700;font-size:15px;'>"
-                & [@Pos] & "</td>"
-            & "<td style='padding:8px 12px;'>" & [DriverName] & "</td>"
+                & StandingsSnapshot[Position] & "</td>"
+            & "<td style='padding:8px 12px;'>" & [@Name] & "</td>"
             & "<td style='padding:8px 12px;text-align:right;font-weight:600;'>"
-                & FORMAT ( [@Pts], "0" ) & "</td>"
+                & FORMAT ( StandingsSnapshot[Points], "0" ) & "</td>"
             & "<td style='padding:8px 12px;text-align:right;color:#888;font-size:13px;'>"
                 & IF (
-                    [@Pos] = 1,
+                    StandingsSnapshot[Position] = 1,
                     "—",
-                    "-" & FORMAT ( LeaderPoints - [@Pts], "0" )
+                    "-" & FORMAT ( LeaderPoints - StandingsSnapshot[Points], "0" )
                 )
             & "</td>"
         & "</tr>",
-        ""
+        "",
+        StandingsSnapshot[Position], ASC
     )
 RETURN
     "<div style='font-family:Inter,system-ui,-apple-system,sans-serif;'>"

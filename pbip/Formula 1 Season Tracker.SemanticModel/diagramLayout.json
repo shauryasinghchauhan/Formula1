@@ -1,0 +1,100 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 2.2857143197740828
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 424.28571428571433,
+            "y": 248.57142857142853
+          },
+          "nodeIndex": "Constructors",
+          "nodeLineageTag": "f61062f5-7a85-4a0f-91b6-48700a3dcef4",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 424.28571428571445,
+            "y": 14.285714285714288
+          },
+          "nodeIndex": "Drivers",
+          "nodeLineageTag": "3323a402-6969-432a-80ed-f001dc0cd707",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 867.92737551173548,
+            "y": 204.28571428571422
+          },
+          "nodeIndex": "Qualifying",
+          "nodeLineageTag": "919c1a9c-57b9-4b59-b6b8-433b1d6604db",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 425.1863596580024,
+            "y": 474.28571428571433
+          },
+          "nodeIndex": "Races",
+          "nodeLineageTag": "0f691953-ea3b-4656-9aed-fee4f6195907",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 0,
+            "y": 208.06895097997108
+          },
+          "nodeIndex": "Results",
+          "nodeLineageTag": "aa76babd-fb7f-4dd7-a81a-d8472992abc9",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1289.05579285653,
+            "y": 288.15378946053249
+          },
+          "nodeIndex": "StandingsSnapshot",
+          "nodeLineageTag": "05dd4230-2550-44c7-a3a2-bb4b7f9b48c2",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 60,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

@@ -8,39 +8,35 @@ relationship f6cd6979-89b8-474f-b0f0-8ae278b4cc55
 	fromColumn: Results.Date
 	toColumn: LocalDateTable_37b84902-a8eb-4dc2-abbb-dbbe643e9107.Date
 
-relationship AutoDetected_023a52af-ec98-4714-86fd-462db3b3583e
-	fromColumn: Results.Round
-	toColumn: Races.Round
-
-relationship AutoDetected_360a09a9-852b-4b31-9a0d-01ca8bd88782
-	fromColumn: Qualifying.Round
-	toColumn: Races.Round
-
-relationship AutoDetected_72659d71-84f1-4d1e-a7b4-14aea41befa6
-	fromColumn: StandingsSnapshot.Round
-	toColumn: Races.Round
-
-relationship AutoDetected_a2610226-5f99-47c9-a380-2e2b8caa579a
-	fromColumn: Results.DriverNumber
-	toColumn: Drivers.DriverNumber
-
-relationship AutoDetected_178a9fc4-65a8-4e56-9ecc-767e6904b740
-	fromColumn: Qualifying.DriverId
+relationship 3fd67520-2624-332b-b82d-5d493140b6f7
+	fromColumn: Results.DriverId
 	toColumn: Drivers.DriverId
 
-relationship AutoDetected_7a4fa327-f3c9-4b57-badb-a04bbbaaa3b2
-	fromColumn: StandingsSnapshot.DriverId
-	toColumn: Drivers.DriverId
-
-relationship AutoDetected_88f9a98d-83a8-417f-b19f-7a483091d394
+relationship e34d80fc-d2fe-6434-8ef0-9232ebc3e3fa
 	fromColumn: Results.ConstructorId
 	toColumn: Constructors.ConstructorId
 
-relationship AutoDetected_af0c9242-1060-4314-b2a8-c6b155de01a0
+relationship b2907f25-4b40-dc33-ae36-658ee150c3e0
+	fromColumn: Results.Round
+	toColumn: Races.Round
+
+relationship 8cbdaaf8-817e-5814-7d4b-9647940e3192
+	fromColumn: Qualifying.DriverId
+	toColumn: Drivers.DriverId
+
+relationship dac18f11-f59d-f9d4-3106-ec7bd014c5bb
 	fromColumn: Qualifying.ConstructorId
 	toColumn: Constructors.ConstructorId
 
-relationship AutoDetected_2f16d856-6217-4e1c-ab01-b97bc86a6192
-	fromColumn: StandingsSnapshot.ConstructorId
-	toColumn: Constructors.ConstructorId
+relationship ea06bf75-93a5-d36a-dbf6-0abf86e674fc
+	fromColumn: Qualifying.Round
+	toColumn: Races.Round
+
+relationship 55403351-0419-23f5-0804-d0d1467ad8d2
+	fromColumn: StandingsSnapshot.DriverId
+	toColumn: Drivers.DriverId
+
+relationship d004736c-3c09-3ddd-5eaf-732a19bd5930
+	fromColumn: StandingsSnapshot.Round
+	toColumn: Races.Round
 
