@@ -1,0 +1,38 @@
+# Power BI binary files — use PBIP instead
+*.pbix
+*.pbit
+
+# Power BI cache and temp files
+*.tmp
+.pbi/
+*.pbiviz.bak
+
+# Local data dumps
+data/raw/
+data/cache/
+*.csv.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.env
+
+# IDE
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# PBIP local cache (the .pbi folder inside PBIP projects)
+**/.pbi/

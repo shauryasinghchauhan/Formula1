@@ -1,0 +1,59 @@
+// =====================================================================
+// CHAMPIONSHIP STATUS MEASURES
+// Current standings, gaps, and "is the title clinched" logic.
+// All depend on StandingsSnapshot fact table.
+// =====================================================================
+
+Current Championship Position =
+VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
+VAR LatestRound =
+    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+RETURN
+    CALCULATE (
+        MAX ( StandingsSnapshot[Position] ),
+        StandingsSnapshot[DriverId] = CurrentDriver,
+        StandingsSnapshot[Round] = LatestRound
+    )
+
+Points Gap to Leader =
+VAR LatestRound =
+    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+VAR LeaderPoints =
+    CALCULATE (
+        MAX ( StandingsSnapshot[Points] ),
+        StandingsSnapshot[Position] = 1,
+        StandingsSnapshot[Round] = LatestRound,
+        ALL ( Drivers )
+    )
+VAR DriverPoints = [Total Points]
+RETURN
+    LeaderPoints - DriverPoints
+
+Races Remaining =
+VAR Today = TODAY ()
+VAR Total = CALCULATE ( DISTINCTCOUNT ( Races[Round] ), ALL ( Races ) )
+VAR Completed =
+    CALCULATE (
+        DISTINCTCOUNT ( Races[Round] ),
+        Races[Date] < Today,
+        ALL ( Races )
+    )
+RETURN
+    Total - Completed
+
+// Upper bound on points still mathematically available to a single driver.
+// Assumes 25 per race win + 8 per sprint win. Adjust SprintCount when finalized.
+Points Available =
+VAR Remaining = [Races Remaining]
+VAR SprintCount = 6                          // adjust per actual 2026 calendar
+VAR SprintRemaining =
+    MAX ( 0, SprintCount - DIVIDE ( Remaining, 4 ) )    // rough estimate
+RETURN
+    Remaining * 25 + SprintRemaining * 8
+
+Title Mathematically Clinched =
+VAR Pos = [Current Championship Position]
+VAR Gap = -1 * [Points Gap to Leader]    // positive number = leader's lead
+VAR Available = [Points Available]
+RETURN
+    IF ( Pos = 1 && Gap > Available, "Yes", "No" )

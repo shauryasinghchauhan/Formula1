@@ -1,0 +1,86 @@
+// =====================================================================
+// QUALIFYING AND TEAMMATE HEAD-TO-HEAD MEASURES
+// =====================================================================
+
+Avg Quali Position =
+AVERAGE ( Qualifying[QualiPosition] )
+
+// Positive = driver gains positions on Sundays vs Saturdays.
+Quali vs Race Delta =
+VAR AvgQ = [Avg Quali Position]
+VAR AvgR = [Avg Finish Position]
+RETURN
+    AvgQ - AvgR
+
+// Race-day head-to-head wins against direct teammate.
+// The fairest single number for "who is the better driver in equal machinery".
+Teammate Race H2H Wins =
+VAR ThisDriver = SELECTEDVALUE ( Drivers[DriverId] )
+VAR ThisTeam =
+    CALCULATE (
+        SELECTEDVALUE ( Results[ConstructorId] ),
+        Results[DriverId] = ThisDriver
+    )
+RETURN
+    SUMX (
+        VALUES ( Results[Round] ),
+        VAR R = Results[Round]
+        VAR MyPos =
+            CALCULATE (
+                MAX ( Results[Position] ),
+                Results[DriverId] = ThisDriver,
+                Results[Round] = R
+            )
+        VAR TeammatePos =
+            CALCULATE (
+                MAX ( Results[Position] ),
+                Results[ConstructorId] = ThisTeam,
+                Results[DriverId] <> ThisDriver,
+                Results[Round] = R
+            )
+        RETURN
+            IF (
+                NOT ISBLANK ( MyPos )
+                    && NOT ISBLANK ( TeammatePos )
+                    && MyPos < TeammatePos,
+                1,
+                0
+            )
+    )
+
+Teammate Race H2H Losses =
+VAR ThisDriver = SELECTEDVALUE ( Drivers[DriverId] )
+VAR ThisTeam =
+    CALCULATE (
+        SELECTEDVALUE ( Results[ConstructorId] ),
+        Results[DriverId] = ThisDriver
+    )
+RETURN
+    SUMX (
+        VALUES ( Results[Round] ),
+        VAR R = Results[Round]
+        VAR MyPos =
+            CALCULATE (
+                MAX ( Results[Position] ),
+                Results[DriverId] = ThisDriver,
+                Results[Round] = R
+            )
+        VAR TeammatePos =
+            CALCULATE (
+                MAX ( Results[Position] ),
+                Results[ConstructorId] = ThisTeam,
+                Results[DriverId] <> ThisDriver,
+                Results[Round] = R
+            )
+        RETURN
+            IF (
+                NOT ISBLANK ( MyPos )
+                    && NOT ISBLANK ( TeammatePos )
+                    && MyPos > TeammatePos,
+                1,
+                0
+            )
+    )
+
+Teammate H2H Display =
+[Teammate Race H2H Wins] & " - " & [Teammate Race H2H Losses]

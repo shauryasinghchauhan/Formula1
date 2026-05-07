@@ -1,0 +1,57 @@
+// =====================================================================
+// FORM AND TREND MEASURES
+// Recent performance, position changes, momentum.
+// =====================================================================
+
+Last 3 Races Points =
+VAR LatestRound =
+    CALCULATE ( MAX ( Results[Round] ), ALL ( Results ) )
+RETURN
+    CALCULATE (
+        SUM ( Results[Points] ),
+        Results[Round] >= LatestRound - 2,
+        Results[Round] <= LatestRound
+    )
+
+// Positive = driver moved UP the standings vs previous round.
+Position Change vs Last Race =
+VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
+VAR LatestRound =
+    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+VAR ThisPos =
+    CALCULATE (
+        MAX ( StandingsSnapshot[Position] ),
+        StandingsSnapshot[Round] = LatestRound,
+        StandingsSnapshot[DriverId] = CurrentDriver
+    )
+VAR PrevPos =
+    CALCULATE (
+        MAX ( StandingsSnapshot[Position] ),
+        StandingsSnapshot[Round] = LatestRound - 1,
+        StandingsSnapshot[DriverId] = CurrentDriver
+    )
+RETURN
+    PrevPos - ThisPos
+
+// Form arrow icon for HTML visuals — green up arrow, red down, gray flat.
+Form Arrow HTML =
+VAR Change = [Position Change vs Last Race]
+RETURN
+    SWITCH (
+        TRUE (),
+        Change > 0, "<span style='color:#22c55e;'>&#9650; " & Change & "</span>",
+        Change < 0, "<span style='color:#ef4444;'>&#9660; " & ABS ( Change ) & "</span>",
+        "<span style='color:#888;'>—</span>"
+    )
+
+// Cumulative points across rounds for a sparkline-style chart.
+Cumulative Points =
+VAR CurrentRound = MAX ( Races[Round] )
+VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
+RETURN
+    CALCULATE (
+        SUM ( Results[Points] ),
+        Results[DriverId] = CurrentDriver,
+        Results[Round] <= CurrentRound,
+        ALL ( Races )
+    )

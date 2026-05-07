@@ -1,0 +1,125 @@
+// =====================================================================
+// HTML VISUAL MEASURES
+// These return complete HTML strings for the HTML Content custom visual.
+// Each measure assumes a specific filter context — see header comment.
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// Leaderboard HTML
+// Filter context: page-level filters only. This measure ignores any driver
+// filter context internally so it always shows top 20.
+// Card-friendly width: ~480px minimum.
+// ---------------------------------------------------------------------
+Leaderboard HTML =
+VAR LatestRound =
+    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+VAR LeaderPoints =
+    CALCULATE (
+        MAX ( StandingsSnapshot[Points] ),
+        StandingsSnapshot[Round] = LatestRound,
+        StandingsSnapshot[Position] = 1,
+        ALL ( Drivers )
+    )
+VAR Rows =
+    ADDCOLUMNS (
+        FILTER (
+            ALL ( Drivers[DriverId], Drivers[DriverName] ),
+            CALCULATE (
+                MAX ( StandingsSnapshot[Round] ),
+                StandingsSnapshot[Round] = LatestRound
+            ) = LatestRound
+        ),
+        "@Pos", CALCULATE (
+            MAX ( StandingsSnapshot[Position] ),
+            StandingsSnapshot[Round] = LatestRound
+        ),
+        "@Pts", CALCULATE (
+            MAX ( StandingsSnapshot[Points] ),
+            StandingsSnapshot[Round] = LatestRound
+        ),
+        "@Color", CALCULATE ( MAX ( Constructors[TeamColor] ) )
+    )
+VAR Body =
+    CONCATENATEX (
+        TOPN ( 20, Rows, [@Pos], ASC ),
+        "<tr>"
+            & "<td style='border-left:6px solid " & [@Color]
+                & ";padding:8px 12px;font-weight:700;font-size:15px;'>"
+                & [@Pos] & "</td>"
+            & "<td style='padding:8px 12px;'>" & [DriverName] & "</td>"
+            & "<td style='padding:8px 12px;text-align:right;font-weight:600;'>"
+                & FORMAT ( [@Pts], "0" ) & "</td>"
+            & "<td style='padding:8px 12px;text-align:right;color:#888;font-size:13px;'>"
+                & IF (
+                    [@Pos] = 1,
+                    "—",
+                    "-" & FORMAT ( LeaderPoints - [@Pts], "0" )
+                )
+            & "</td>"
+        & "</tr>",
+        ""
+    )
+RETURN
+    "<div style='font-family:Inter,system-ui,-apple-system,sans-serif;'>"
+    & "<table style='width:100%;border-collapse:collapse;font-size:14px;'>"
+    & "<thead><tr style='border-bottom:2px solid #333;color:#888;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;'>"
+    & "<th style='padding:8px 12px;'>#</th>"
+    & "<th style='padding:8px 12px;'>Driver</th>"
+    & "<th style='padding:8px 12px;text-align:right;'>Pts</th>"
+    & "<th style='padding:8px 12px;text-align:right;'>Gap</th>"
+    & "</tr></thead>"
+    & "<tbody>" & Body & "</tbody></table></div>"
+
+
+// ---------------------------------------------------------------------
+// Podium HTML
+// Filter context: should be a single round (use a slicer).
+// Renders a 3-step podium for that race's top 3.
+// ---------------------------------------------------------------------
+Podium HTML =
+VAR P1 =
+    CALCULATETABLE (
+        ROW (
+            "Name", SELECTEDVALUE ( Results[DriverName] ),
+            "Color", SELECTEDVALUE ( Constructors[TeamColor] )
+        ),
+        Results[Position] = 1
+    )
+VAR P2 =
+    CALCULATETABLE (
+        ROW (
+            "Name", SELECTEDVALUE ( Results[DriverName] ),
+            "Color", SELECTEDVALUE ( Constructors[TeamColor] )
+        ),
+        Results[Position] = 2
+    )
+VAR P3 =
+    CALCULATETABLE (
+        ROW (
+            "Name", SELECTEDVALUE ( Results[DriverName] ),
+            "Color", SELECTEDVALUE ( Constructors[TeamColor] )
+        ),
+        Results[Position] = 3
+    )
+VAR P1Name = MAXX ( P1, [Name] )
+VAR P1Color = MAXX ( P1, [Color] )
+VAR P2Name = MAXX ( P2, [Name] )
+VAR P2Color = MAXX ( P2, [Color] )
+VAR P3Name = MAXX ( P3, [Name] )
+VAR P3Color = MAXX ( P3, [Color] )
+RETURN
+    "<div style='display:flex;align-items:flex-end;justify-content:center;gap:8px;font-family:Inter,system-ui,sans-serif;padding:20px;'>"
+    & "<div style='text-align:center;'>"
+        & "<div style='font-size:13px;font-weight:600;margin-bottom:4px;'>" & P2Name & "</div>"
+        & "<div style='background:" & P2Color & ";width:100px;height:80px;display:flex;align-items:center;justify-content:center;color:white;font-size:32px;font-weight:800;border-radius:4px 4px 0 0;'>2</div>"
+    & "</div>"
+    & "<div style='text-align:center;'>"
+        & "<div style='font-size:14px;font-weight:700;margin-bottom:4px;'>" & P1Name & "</div>"
+        & "<div style='background:" & P1Color & ";width:100px;height:120px;display:flex;align-items:center;justify-content:center;color:white;font-size:40px;font-weight:800;border-radius:4px 4px 0 0;'>1</div>"
+    & "</div>"
+    & "<div style='text-align:center;'>"
+        & "<div style='font-size:13px;font-weight:600;margin-bottom:4px;'>" & P3Name & "</div>"
+        & "<div style='background:" & P3Color & ";width:100px;height:60px;display:flex;align-items:center;justify-content:center;color:white;font-size:28px;font-weight:800;border-radius:4px 4px 0 0;'>3</div>"
+    & "</div>"
+    & "</div>"

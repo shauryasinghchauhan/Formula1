@@ -1,0 +1,55 @@
+// =====================================================================
+// FOUNDATIONAL MEASURES
+// Basic counting and aggregation. Building blocks for everything else.
+// =====================================================================
+
+Total Points =
+SUM ( Results[Points] )
+
+Race Wins =
+CALCULATE (
+    COUNTROWS ( Results ),
+    Results[Position] = 1
+)
+
+Podiums =
+CALCULATE (
+    COUNTROWS ( Results ),
+    Results[Position] <= 3
+)
+
+Points Finishes =
+CALCULATE (
+    COUNTROWS ( Results ),
+    Results[Points] > 0
+)
+
+// "Finished" or classified-with-laps-down counts as completed.
+// Pure DNF reasons (mechanical, accident) excluded.
+DNFs =
+CALCULATE (
+    COUNTROWS ( Results ),
+    NOT ( Results[Status] IN { "Finished" } ),
+    NOT ( CONTAINSSTRING ( Results[Status], "Lap" ) )
+)
+
+Avg Finish Position =
+AVERAGEX (
+    FILTER ( Results, NOT ISBLANK ( Results[Position] ) ),
+    Results[Position]
+)
+
+Avg Grid Position =
+AVERAGE ( Results[Grid] )
+
+Fastest Laps =
+CALCULATE (
+    COUNTROWS ( Results ),
+    Results[FLRank] = "1"
+)
+
+Pole Positions =
+CALCULATE (
+    COUNTROWS ( Qualifying ),
+    Qualifying[QualiPosition] = 1
+)

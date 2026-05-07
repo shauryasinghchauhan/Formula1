@@ -1,0 +1,63 @@
+{
+  "_comment": "Team color reference. 2026 entries are speculative until the season starts and IDs are confirmed in API responses. Update Constructors.pq to match.",
+  "_lastUpdated": "2026-05",
+  "teams": {
+    "ferrari": {
+      "name": "Scuderia Ferrari",
+      "primary": "#E80020",
+      "secondary": "#FFFFFF"
+    },
+    "mercedes": {
+      "name": "Mercedes-AMG Petronas",
+      "primary": "#27F4D2",
+      "secondary": "#000000"
+    },
+    "red_bull": {
+      "name": "Oracle Red Bull Racing",
+      "primary": "#3671C6",
+      "secondary": "#FFFFFF"
+    },
+    "mclaren": {
+      "name": "McLaren",
+      "primary": "#FF8000",
+      "secondary": "#000000"
+    },
+    "aston_martin": {
+      "name": "Aston Martin",
+      "primary": "#229971",
+      "secondary": "#FFFFFF"
+    },
+    "alpine": {
+      "name": "BWT Alpine",
+      "primary": "#FF87BC",
+      "secondary": "#000000"
+    },
+    "williams": {
+      "name": "Williams",
+      "primary": "#64C4FF",
+      "secondary": "#FFFFFF"
+    },
+    "rb": {
+      "name": "Racing Bulls",
+      "primary": "#6692FF",
+      "secondary": "#FFFFFF"
+    },
+    "sauber": {
+      "name": "Stake F1 Team / Audi (TBC)",
+      "primary": "#52E252",
+      "secondary": "#000000",
+      "_note": "May rebrand to Audi for 2026; constructorId may change to 'audi'"
+    },
+    "haas": {
+      "name": "MoneyGram Haas",
+      "primary": "#B6BABD",
+      "secondary": "#000000"
+    },
+    "cadillac": {
+      "name": "Cadillac F1 (TBC)",
+      "primary": "#FFCC00",
+      "secondary": "#000000",
+      "_note": "New entry for 2026; constructorId speculative"
+    }
+  }
+}
