@@ -342,7 +342,7 @@ table _Measures
 			    )
 			VAR P1P2Gap = LeaderPoints - P2Points
 			
-			// ---------- DRIVER STANDINGS TABLE ----------
+			// ---------- DRIVER STANDINGS WITH ENRICHED STATS ----------
 			VAR DriverStandings =
 			    CALCULATETABLE (
 			        SUMMARIZE (
@@ -360,30 +360,66 @@ table _Measures
 			    ADDCOLUMNS (
 			        DriverStandings,
 			        "@Name",
-			            LOOKUPVALUE (
-			                Drivers[DriverName],
-			                Drivers[DriverId], StandingsSnapshot[DriverId]
-			            ),
+			            LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], StandingsSnapshot[DriverId] ),
 			        "@Code",
-			            LOOKUPVALUE (
-			                Drivers[DriverCode],
-			                Drivers[DriverId], StandingsSnapshot[DriverId]
-			            ),
+			            LOOKUPVALUE ( Drivers[DriverCode], Drivers[DriverId], StandingsSnapshot[DriverId] ),
+			        "@Number",
+			            LOOKUPVALUE ( Drivers[DriverNumber], Drivers[DriverId], StandingsSnapshot[DriverId] ),
+			        "@Nat",
+			            LOOKUPVALUE ( Drivers[DriverNationality], Drivers[DriverId], StandingsSnapshot[DriverId] ),
 			        "@TeamName",
-			            LOOKUPVALUE (
-			                Constructors[ConstructorName],
-			                Constructors[ConstructorId], StandingsSnapshot[ConstructorId]
-			            ),
+			            LOOKUPVALUE ( Constructors[ConstructorName], Constructors[ConstructorId], StandingsSnapshot[ConstructorId] ),
 			        "@Color",
-			            LOOKUPVALUE (
-			                Constructors[TeamColor],
-			                Constructors[ConstructorId], StandingsSnapshot[ConstructorId]
-			            )
+			            LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], StandingsSnapshot[ConstructorId] ),
+			        "@Podiums",
+			            VAR DId = StandingsSnapshot[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    COUNTROWS ( Results ),
+			                    Results[DriverId] = DId,
+			                    Results[Position] <= 3
+			                ),
+			        "@AvgFinish",
+			            VAR DId = StandingsSnapshot[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    AVERAGEX ( FILTER ( Results, NOT ISBLANK ( Results[Position] ) ), Results[Position] ),
+			                    Results[DriverId] = DId
+			                ),
+			        "@AvgGrid",
+			            VAR DId = StandingsSnapshot[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    AVERAGE ( Results[Grid] ),
+			                    Results[DriverId] = DId
+			                ),
+			        "@DNFs",
+			            VAR DId = StandingsSnapshot[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    COUNTROWS ( Results ),
+			                    Results[DriverId] = DId,
+			                    NOT ( Results[Status] IN { "Finished" } ),
+			                    NOT ( CONTAINSSTRING ( Results[Status], "Lap" ) )
+			                ),
+			        "@FLs",
+			            VAR DId = StandingsSnapshot[DriverId]
+			            RETURN
+			                CALCULATE (
+			                    COUNTROWS ( Results ),
+			                    Results[DriverId] = DId,
+			                    Results[FLRank] = "1"
+			                )
 			    )
 			VAR DriverRowsHTML =
 			    CONCATENATEX (
 			        DriverRows,
-			        "<div class='row' style='border-left:4px solid " & [@Color] & "'>"
+			        VAR DelayMs = StandingsSnapshot[Position] * 40
+			        VAR GapTxt = IF ( StandingsSnapshot[Position] = 1, "LEADER",
+			                "-" & FORMAT ( LeaderPoints - StandingsSnapshot[Points], "0" ) )
+			        RETURN
+			        "<div class='row' style='border-left:4px solid " & [@Color]
+			            & ";animation-delay:" & DelayMs & "ms'>"
 			            & "<div class='pos'>" & StandingsSnapshot[Position] & "</div>"
 			            & "<div class='code'>" & IF ( ISBLANK ( [@Code] ), "—", [@Code] ) & "</div>"
 			            & "<div class='dname'>"
@@ -392,9 +428,25 @@ table _Measures
 			            & "</div>"
 			            & "<div class='wins'>" & StandingsSnapshot[Wins] & "W</div>"
 			            & "<div class='pts'>" & FORMAT ( StandingsSnapshot[Points], "0" ) & "</div>"
-			            & "<div class='gap'>"
-			                & IF ( StandingsSnapshot[Position] = 1, "LEADER",
-			                    "-" & FORMAT ( LeaderPoints - StandingsSnapshot[Points], "0" ) )
+			            & "<div class='gap'>" & GapTxt & "</div>"
+			            // TOOLTIP CARD
+			            & "<div class='tooltip' style='border-top:3px solid " & [@Color] & "'>"
+			                & "<div class='tt-head'>"
+			                    & "<div class='tt-num' style='background:" & [@Color] & "'>" & IF ( ISBLANK ( [@Number] ), "—", [@Number] ) & "</div>"
+			                    & "<div class='tt-id'>"
+			                        & "<div class='tt-name'>" & [@Name] & "</div>"
+			                        & "<div class='tt-team' style='color:" & [@Color] & "'>" & [@TeamName] & "</div>"
+			                    & "</div>"
+			                & "</div>"
+			                & "<div class='tt-grid'>"
+			                    & "<div class='tt-stat'><div class='tt-v'>" & StandingsSnapshot[Wins] & "</div><div class='tt-l'>Wins</div></div>"
+			                    & "<div class='tt-stat'><div class='tt-v'>" & [@Podiums] & "</div><div class='tt-l'>Podiums</div></div>"
+			                    & "<div class='tt-stat'><div class='tt-v'>" & [@FLs] & "</div><div class='tt-l'>Fastest Laps</div></div>"
+			                    & "<div class='tt-stat'><div class='tt-v'>" & FORMAT ( [@AvgFinish], "0.0" ) & "</div><div class='tt-l'>Avg Finish</div></div>"
+			                    & "<div class='tt-stat'><div class='tt-v'>" & FORMAT ( [@AvgGrid], "0.0" ) & "</div><div class='tt-l'>Avg Grid</div></div>"
+			                    & "<div class='tt-stat'><div class='tt-v'>" & [@DNFs] & "</div><div class='tt-l'>DNFs</div></div>"
+			                & "</div>"
+			                & "<div class='tt-foot'>" & UPPER ( IF ( ISBLANK ( [@Nat] ), "—", [@Nat] ) ) & " · " & FORMAT ( StandingsSnapshot[Points], "0" ) & " PTS</div>"
 			            & "</div>"
 			        & "</div>",
 			        "",
@@ -413,6 +465,12 @@ table _Measures
 			            CALCULATE (
 			                SUM ( Results[Points] ),
 			                ALLEXCEPT ( Constructors, Constructors[ConstructorId] )
+			            ),
+			        "@CWins",
+			            CALCULATE (
+			                COUNTROWS ( Results ),
+			                Results[Position] = 1,
+			                ALLEXCEPT ( Constructors, Constructors[ConstructorId] )
 			            )
 			    )
 			VAR ConstructorFiltered =
@@ -423,12 +481,15 @@ table _Measures
 			    CONCATENATEX (
 			        ConstructorFiltered,
 			        VAR BarPct = DIVIDE ( [@CPoints], MaxConstructorPoints ) * 100
+			        VAR Idx = RANKX ( ConstructorFiltered, [@CPoints], , DESC )
+			        VAR DelayMs = Idx * 80
 			        RETURN
-			            "<div class='crow'>"
+			            "<div class='crow' style='animation-delay:" & DelayMs & "ms'>"
 			                & "<div class='cname'>" & [@CName] & "</div>"
 			                & "<div class='cbar-wrap'>"
-			                    & "<div class='cbar' style='width:" & FORMAT ( BarPct, "0.0" )
-			                        & "%;background:" & [@CColor] & ";'></div>"
+			                    & "<div class='cbar' style='--target-w:" & FORMAT ( BarPct, "0.0" )
+			                        & "%;background:" & [@CColor]
+			                        & ";animation-delay:" & ( DelayMs + 200 ) & "ms;'></div>"
 			                & "</div>"
 			                & "<div class='cpts'>" & FORMAT ( [@CPoints], "0" ) & "</div>"
 			            & "</div>",
@@ -436,7 +497,7 @@ table _Measures
 			        [@CPoints], DESC
 			    )
 			
-			// ---------- RECENT RACE RESULTS ----------
+			// ---------- RECENT RACES ----------
 			VAR RecentRaces =
 			    FILTER (
 			        ALL ( Races[Round], Races[RaceName], Races[Country], Races[Date] ),
@@ -447,32 +508,18 @@ table _Measures
 			        RecentRaces,
 			        VAR R = Races[Round]
 			        VAR P1 =
-			            CALCULATE (
-			                MAX ( Results[DriverName] ),
-			                Results[Round] = R,
-			                Results[Position] = 1
-			            )
+			            CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 1 )
 			        VAR P1Team =
-			            CALCULATE (
-			                MAX ( Constructors[TeamColor] ),
-			                Results[Round] = R,
-			                Results[Position] = 1
-			            )
+			            CALCULATE ( MAX ( Constructors[TeamColor] ), Results[Round] = R, Results[Position] = 1 )
 			        VAR P2 =
-			            CALCULATE (
-			                MAX ( Results[DriverName] ),
-			                Results[Round] = R,
-			                Results[Position] = 2
-			            )
+			            CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 2 )
 			        VAR P3 =
-			            CALCULATE (
-			                MAX ( Results[DriverName] ),
-			                Results[Round] = R,
-			                Results[Position] = 3
-			            )
+			            CALCULATE ( MAX ( Results[DriverName] ), Results[Round] = R, Results[Position] = 3 )
+			        VAR Idx = LatestRound - R
+			        VAR DelayMs = Idx * 120
 			        RETURN
 			            IF ( NOT ISBLANK ( P1 ),
-			                "<div class='race'>"
+			                "<div class='race' style='animation-delay:" & DelayMs & "ms'>"
 			                    & "<div class='rhead'>"
 			                        & "<span class='rrn'>R" & R & "</span>"
 			                        & "<span class='rname'>" & Races[Country] & "</span>"
@@ -498,46 +545,64 @@ table _Measures
 			        Races[Round], DESC
 			    )
 			
-			// ---------- ASSEMBLE PAGE ----------
+			// ---------- ASSEMBLE ----------
 			RETURN
 			"<style>"
 			& ".dash *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}"
-			& ".dash{display:grid;grid-template-columns:repeat(12,1fr);grid-gap:14px;padding:18px;background:#0a0a0d;min-height:100vh;color:#ffffff}"
+			& ".dash{display:grid;grid-template-columns:repeat(12,1fr);grid-gap:14px;padding:18px;background:#0a0a0d;min-height:100vh;color:#ffffff;position:relative;overflow:hidden}"
+			
+			// ANIMATION KEYFRAMES
+			& "@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}"
+			& "@keyframes fadeInLeft{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}"
+			& "@keyframes fadeIn{from{opacity:0}to{opacity:1}}"
+			& "@keyframes barGrow{from{width:0}to{width:var(--target-w)}}"
+			& "@keyframes f1pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}"
+			& "@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}"
+			& "@keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,24,1,0.4)}50%{box-shadow:0 0 0 8px rgba(255,24,1,0)}}"
 			
 			// HEADER
-			& ".dash .header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:6px 4px 14px;border-bottom:1px solid #2a2a30}"
+			& ".dash .header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:6px 4px 14px;border-bottom:1px solid #2a2a30;animation:fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) backwards}"
 			& ".dash .title{display:flex;align-items:center;gap:14px;color:#ffffff}"
-			& ".dash .title .bar{width:5px;height:32px;background:#FF1801;border-radius:2px;display:inline-block}"
+			& ".dash .title .bar{width:5px;height:32px;background:#FF1801;border-radius:2px;display:inline-block;animation:fadeInLeft 0.5s ease-out}"
 			& ".dash .title h1{font-size:22px;font-weight:800;letter-spacing:0.05em;color:#ffffff;margin:0}"
 			& ".dash .title h1 .red{color:#FF1801}"
 			& ".dash .roundbox{text-align:right;font-size:11px;color:#aaaaaa;letter-spacing:0.1em;text-transform:uppercase}"
 			& ".dash .roundbox .big{font-size:18px;color:#ffffff;font-weight:700;letter-spacing:0.02em;margin-top:2px}"
+			& ".dash .live-dot{display:inline-block;width:6px;height:6px;background:#FF1801;border-radius:50%;margin-right:6px;animation:glowPulse 2s infinite}"
 			
-			// KPI CARDS
-			& ".dash .kpi{background:linear-gradient(135deg,#1a1a1f,#15151a);border:1px solid #2a2a30;border-radius:8px;padding:16px 18px;position:relative;overflow:hidden;color:#ffffff}"
+			// KPIs
+			& ".dash .kpi{background:linear-gradient(135deg,#1a1a1f,#15151a);border:1px solid #2a2a30;border-radius:8px;padding:16px 18px;position:relative;overflow:hidden;color:#ffffff;animation:fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) backwards;transition:transform 0.2s,border-color 0.2s}"
+			& ".dash .kpi:hover{transform:translateY(-2px);border-color:#3a3a45}"
+			& ".dash .kpi.k1{animation-delay:0.05s}"
+			& ".dash .kpi.k2{animation-delay:0.1s}"
+			& ".dash .kpi.k3{animation-delay:0.15s}"
+			& ".dash .kpi.k4{animation-delay:0.2s}"
 			& ".dash .kpi .accent-bar{position:absolute;left:0;top:0;width:4px;height:100%}"
 			& ".dash .kpi.k1 .accent-bar{background:#FF1801}"
 			& ".dash .kpi.k2 .accent-bar{background:#FFCC00}"
 			& ".dash .kpi.k3 .accent-bar{background:#27F4D2}"
 			& ".dash .kpi.k4 .accent-bar{background:#3671C6}"
+			& ".dash .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);animation:shimmer 3s infinite;animation-delay:1s}"
 			& ".dash .kpi .label{font-size:10px;color:#aaaaaa;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;font-weight:600}"
 			& ".dash .kpi .value{font-size:24px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;color:#ffffff}"
 			& ".dash .kpi .sub{font-size:11px;color:#aaaaaa;margin-top:6px}"
 			
 			// PANELS
-			& ".dash .panel{background:#15151a;border:1px solid #2a2a30;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;color:#ffffff}"
+			& ".dash .panel{background:#15151a;border:1px solid #2a2a30;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;color:#ffffff;animation:fadeInUp 0.7s cubic-bezier(0.16,1,0.3,1) backwards}"
+			& ".dash .panel.p1{animation-delay:0.25s}"
+			& ".dash .panel.p2{animation-delay:0.3s}"
+			& ".dash .panel.p3{animation-delay:0.35s}"
 			& ".dash .panel-head{padding:12px 16px;border-bottom:1px solid #2a2a30;display:flex;justify-content:space-between;align-items:center;background:#1a1a1f}"
 			& ".dash .panel-head h2{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#cccccc;font-weight:700;margin:0;display:flex;align-items:center}"
 			& ".dash .panel-head .accent-dot{width:8px;height:8px;background:#FF1801;border-radius:50%;display:inline-block;margin-right:8px;animation:f1pulse 2s infinite}"
 			& ".dash .panel-head .meta{font-size:10px;color:#888888}"
-			& "@keyframes f1pulse{0%,100%{opacity:1}50%{opacity:0.4}}"
-			& ".dash .panel-body{padding:0;overflow-y:auto;color:#ffffff}"
+			& ".dash .panel-body{padding:0;overflow-y:auto;color:#ffffff;position:relative}"
 			
-			// STANDINGS ROWS
+			// STANDINGS
 			& ".dash .standings{display:flex;flex-direction:column}"
-			& ".dash .row{display:grid;grid-template-columns:36px 50px 1fr 50px 70px 70px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1f1f24;transition:background 0.15s;color:#ffffff}"
-			& ".dash .row:hover{background:#1f1f24}"
-			& ".dash .row .pos{font-weight:800;font-size:18px;color:#ffffff;text-align:center}"
+			& ".dash .row{display:grid;grid-template-columns:36px 50px 1fr 50px 70px 70px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1f1f24;transition:background 0.2s,transform 0.2s,padding 0.2s;color:#ffffff;position:relative;cursor:default;animation:fadeInLeft 0.4s ease-out backwards}"
+			& ".dash .row:hover{background:#1f1f24;transform:translateX(2px)}"
+			& ".dash .row .pos{font-weight:800;font-size:18px;color:#ffffff;text-align:center;font-variant-numeric:tabular-nums}"
 			& ".dash .row .code{font-family:'JetBrains Mono','Consolas',monospace;font-size:11px;color:#cccccc;letter-spacing:0.05em;background:#0a0a0d;padding:3px 6px;border-radius:3px;text-align:center}"
 			& ".dash .row .dname{display:flex;flex-direction:column;gap:2px}"
 			& ".dash .row .dname .dname-main{font-size:14px;font-weight:600;color:#ffffff}"
@@ -546,22 +611,39 @@ table _Measures
 			& ".dash .row .pts{font-size:16px;font-weight:800;color:#ffffff;text-align:right;font-variant-numeric:tabular-nums}"
 			& ".dash .row .gap{font-size:11px;color:#aaaaaa;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:0.03em}"
 			
+			// TOOLTIPS
+			& ".dash .tooltip{position:absolute;left:50%;top:100%;transform:translateX(-50%) translateY(-6px);width:320px;background:#1a1a1f;border:1px solid #2a2a30;border-radius:6px;padding:0;box-shadow:0 12px 32px rgba(0,0,0,0.6);opacity:0;pointer-events:none;transition:opacity 0.2s,transform 0.2s;z-index:1000;overflow:hidden}"
+			& ".dash .row:hover .tooltip{opacity:1;transform:translateX(-50%) translateY(2px);pointer-events:auto}"
+			& ".dash .tt-head{display:flex;gap:12px;align-items:center;padding:14px 14px 10px;background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent)}"
+			& ".dash .tt-num{width:42px;height:42px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#ffffff;font-family:'JetBrains Mono',monospace;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.3)}"
+			& ".dash .tt-id{flex:1;min-width:0}"
+			& ".dash .tt-name{font-size:15px;font-weight:700;color:#ffffff;line-height:1.2}"
+			& ".dash .tt-team{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-top:3px}"
+			& ".dash .tt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#2a2a30;margin:0 14px;border-radius:4px;overflow:hidden}"
+			& ".dash .tt-stat{padding:10px 8px;background:#15151a;text-align:center}"
+			& ".dash .tt-v{font-size:18px;font-weight:800;color:#ffffff;line-height:1;font-variant-numeric:tabular-nums}"
+			& ".dash .tt-l{font-size:9px;color:#888888;text-transform:uppercase;letter-spacing:0.08em;margin-top:5px;font-weight:600}"
+			& ".dash .tt-foot{padding:10px 14px;font-size:10px;color:#888888;letter-spacing:0.08em;border-top:1px solid #2a2a30;background:#0f0f12;text-align:center;font-weight:600}"
+			
 			// CONSTRUCTORS
 			& ".dash .constructors{padding:14px 16px;display:flex;flex-direction:column;gap:10px}"
-			& ".dash .crow{display:grid;grid-template-columns:120px 1fr 70px;align-items:center;gap:12px}"
+			& ".dash .crow{display:grid;grid-template-columns:120px 1fr 70px;align-items:center;gap:12px;animation:fadeInLeft 0.5s ease-out backwards}"
 			& ".dash .crow .cname{font-size:12px;font-weight:600;color:#ffffff}"
 			& ".dash .crow .cbar-wrap{height:22px;background:#0a0a0d;border-radius:3px;overflow:hidden;position:relative}"
-			& ".dash .crow .cbar{height:100%;border-radius:3px;transition:width 0.6s cubic-bezier(0.16,1,0.3,1)}"
+			& ".dash .crow .cbar{height:100%;border-radius:3px;width:0;animation:barGrow 0.9s cubic-bezier(0.16,1,0.3,1) forwards;position:relative;overflow:hidden}"
+			& ".dash .crow .cbar::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);animation:shimmer 2.5s infinite;animation-delay:1.2s}"
 			& ".dash .crow .cpts{font-size:14px;font-weight:800;text-align:right;color:#ffffff;font-variant-numeric:tabular-nums}"
 			
-			// RECENT RACES
+			// RECENT
 			& ".dash .recent{padding:14px 16px;display:flex;flex-direction:column;gap:14px}"
-			& ".dash .race{padding:12px 14px;background:#0f0f12;border-left:3px solid #FF1801;border-radius:3px;color:#ffffff}"
+			& ".dash .race{padding:12px 14px;background:#0f0f12;border-left:3px solid #FF1801;border-radius:3px;color:#ffffff;animation:fadeInUp 0.5s ease-out backwards;transition:transform 0.2s}"
+			& ".dash .race:hover{transform:translateX(3px)}"
 			& ".dash .rhead{margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:0.05em;text-transform:uppercase}"
 			& ".dash .rrn{color:#FF1801;font-weight:800}"
 			& ".dash .rname{color:#ffffff;font-weight:600}"
 			& ".dash .podium-mini{display:flex;flex-direction:column;gap:5px}"
-			& ".dash .pp{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 10px;border-radius:3px;background:#15151a;color:#ffffff}"
+			& ".dash .pp{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 10px;border-radius:3px;background:#15151a;color:#ffffff;transition:transform 0.15s}"
+			& ".dash .pp:hover{transform:translateX(2px)}"
 			& ".dash .pp1{background:linear-gradient(90deg,rgba(255,204,0,0.18),rgba(255,204,0,0.04))}"
 			& ".dash .pp2{background:rgba(255,255,255,0.04)}"
 			& ".dash .pp3{background:rgba(205,127,50,0.08)}"
@@ -583,12 +665,12 @@ table _Measures
 			        & "<h1>FORMULA <span class='red'>1</span> &nbsp;·&nbsp; 2026 SEASON</h1>"
 			    & "</div>"
 			    & "<div class='roundbox'>"
-			        & "Latest Round"
+			        & "<span class='live-dot'></span>Latest Round"
 			        & "<div class='big'>R" & LatestRound & " / " & TotalRounds & " · " & UPPER ( IF ( ISBLANK ( LatestCountry ), "—", LatestCountry ) ) & "</div>"
 			    & "</div>"
 			& "</div>"
 			
-			// KPIS
+			// KPIs
 			& "<div class='kpi k1' style='grid-column:1/4'>"
 			    & "<span class='accent-bar'></span>"
 			    & "<div class='label'>Championship Leader</div>"
@@ -618,8 +700,8 @@ table _Measures
 			& "</div>"
 			
 			// DRIVER STANDINGS
-			& "<div class='panel' style='grid-column:1/8;grid-row:3/5'>"
-			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Driver Standings</h2><span class='meta'>AS OF ROUND " & LatestRound & "</span></div>"
+			& "<div class='panel p1' style='grid-column:1/8;grid-row:3/5'>"
+			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Driver Standings</h2><span class='meta'>HOVER A ROW FOR DETAILS</span></div>"
 			    & "<div class='panel-body standings'>"
 			        & IF ( ISBLANK ( DriverRowsHTML ),
 			            "<div class='empty'>No race data yet for the 2026 season.</div>",
@@ -628,7 +710,7 @@ table _Measures
 			& "</div>"
 			
 			// CONSTRUCTORS
-			& "<div class='panel' style='grid-column:8/13;grid-row:3/4'>"
+			& "<div class='panel p2' style='grid-column:8/13;grid-row:3/4'>"
 			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Constructors Championship</h2></div>"
 			    & "<div class='panel-body constructors'>"
 			        & IF ( ISBLANK ( ConstructorRowsHTML ),
@@ -637,8 +719,8 @@ table _Measures
 			    & "</div>"
 			& "</div>"
 			
-			// RECENT RACES
-			& "<div class='panel' style='grid-column:8/13;grid-row:4/5'>"
+			// RECENT
+			& "<div class='panel p3' style='grid-column:8/13;grid-row:4/5'>"
 			    & "<div class='panel-head'><h2><span class='accent-dot'></span>Recent Race Winners</h2></div>"
 			    & "<div class='panel-body recent'>"
 			        & IF ( ISBLANK ( RecentRowsHTML ),
@@ -649,6 +731,441 @@ table _Measures
 			
 			& "</div>"
 		lineageTag: 6b5124b2-e810-414d-8cf9-6724464b6d21
+
+	measure 'Race Results HTML' =
+			
+			
+			// ---------- SELECTED RACE ----------
+			VAR SelRound =
+			    SELECTEDVALUE ( Races[Round] )
+			VAR SelRaceName =
+			    SELECTEDVALUE ( Races[RaceName] )
+			VAR SelCircuit =
+			    SELECTEDVALUE ( Races[CircuitName] )
+			VAR SelCountry =
+			    SELECTEDVALUE ( Races[Country] )
+			VAR SelCity =
+			    SELECTEDVALUE ( Races[City] )
+			VAR SelDate =
+			    SELECTEDVALUE ( Races[Date] )
+			
+			// Fallback to latest round if no slicer selection
+			VAR EffectiveRound =
+			    IF (
+			        ISBLANK ( SelRound ),
+			        CALCULATE ( MAX ( Results[Round] ), ALL ( Races ) ),
+			        SelRound
+			    )
+			VAR EffectiveRaceName =
+			    IF ( ISBLANK ( SelRaceName ),
+			        CALCULATE ( MAX ( Races[RaceName] ), Races[Round] = EffectiveRound, ALL ( Races ) ),
+			        SelRaceName
+			    )
+			VAR EffectiveCircuit =
+			    IF ( ISBLANK ( SelCircuit ),
+			        CALCULATE ( MAX ( Races[CircuitName] ), Races[Round] = EffectiveRound, ALL ( Races ) ),
+			        SelCircuit
+			    )
+			VAR EffectiveCountry =
+			    IF ( ISBLANK ( SelCountry ),
+			        CALCULATE ( MAX ( Races[Country] ), Races[Round] = EffectiveRound, ALL ( Races ) ),
+			        SelCountry
+			    )
+			VAR EffectiveCity =
+			    IF ( ISBLANK ( SelCity ),
+			        CALCULATE ( MAX ( Races[City] ), Races[Round] = EffectiveRound, ALL ( Races ) ),
+			        SelCity
+			    )
+			VAR EffectiveDate =
+			    IF ( ISBLANK ( SelDate ),
+			        CALCULATE ( MAX ( Races[Date] ), Races[Round] = EffectiveRound, ALL ( Races ) ),
+			        SelDate
+			    )
+			
+			// ---------- RACE-LEVEL STATS ----------
+			VAR DriversFinished =
+			    CALCULATE (
+			        COUNTROWS ( Results ),
+			        Results[Round] = EffectiveRound,
+			        Results[Status] = "Finished",
+			        ALL ( Races )
+			    )
+			VAR DriversDNF =
+			    CALCULATE (
+			        COUNTROWS ( Results ),
+			        Results[Round] = EffectiveRound,
+			        NOT ( Results[Status] = "Finished" ),
+			        NOT ( CONTAINSSTRING ( Results[Status], "Lap" ) ),
+			        ALL ( Races )
+			    )
+			VAR TotalLaps =
+			    CALCULATE (
+			        MAX ( Results[Laps] ),
+			        Results[Round] = EffectiveRound,
+			        Results[Position] = 1,
+			        ALL ( Races )
+			    )
+			
+			// FASTEST LAP
+			VAR FLDriver =
+			    CALCULATE (
+			        MAX ( Results[DriverName] ),
+			        Results[Round] = EffectiveRound,
+			        Results[FLRank] = "1",
+			        ALL ( Races )
+			    )
+			VAR FLTime =
+			    CALCULATE (
+			        MAX ( Results[FLTime] ),
+			        Results[Round] = EffectiveRound,
+			        Results[FLRank] = "1",
+			        ALL ( Races )
+			    )
+			VAR FLLap =
+			    CALCULATE (
+			        MAX ( Results[FLLap] ),
+			        Results[Round] = EffectiveRound,
+			        Results[FLRank] = "1",
+			        ALL ( Races )
+			    )
+			VAR FLTeamColor =
+			    CALCULATE (
+			        MAX ( Constructors[TeamColor] ),
+			        Results[Round] = EffectiveRound,
+			        Results[FLRank] = "1",
+			        ALL ( Races )
+			    )
+			
+			// POLE POSITION
+			VAR PoleDriver =
+			    CALCULATE (
+			        MAX ( Results[DriverName] ),
+			        Results[Round] = EffectiveRound,
+			        Results[Grid] = 1,
+			        ALL ( Races )
+			    )
+			
+			// ---------- PODIUM ----------
+			VAR PodiumP1 =
+			    CALCULATETABLE (
+			        ROW (
+			            "name", MAX ( Results[DriverName] ),
+			            "constructorId", MAX ( Results[ConstructorId] ),
+			            "code", MAX ( Drivers[DriverCode] ),
+			            "number", MAX ( Drivers[DriverNumber] ),
+			            "time", MAX ( Results[RaceTime] )
+			        ),
+			        Results[Round] = EffectiveRound,
+			        Results[Position] = 1,
+			        ALL ( Races )
+			    )
+			VAR PodiumP2 =
+			    CALCULATETABLE (
+			        ROW (
+			            "name", MAX ( Results[DriverName] ),
+			            "constructorId", MAX ( Results[ConstructorId] ),
+			            "code", MAX ( Drivers[DriverCode] ),
+			            "number", MAX ( Drivers[DriverNumber] ),
+			            "time", MAX ( Results[RaceTime] )
+			        ),
+			        Results[Round] = EffectiveRound,
+			        Results[Position] = 2,
+			        ALL ( Races )
+			    )
+			VAR PodiumP3 =
+			    CALCULATETABLE (
+			        ROW (
+			            "name", MAX ( Results[DriverName] ),
+			            "constructorId", MAX ( Results[ConstructorId] ),
+			            "code", MAX ( Drivers[DriverCode] ),
+			            "number", MAX ( Drivers[DriverNumber] ),
+			            "time", MAX ( Results[RaceTime] )
+			        ),
+			        Results[Round] = EffectiveRound,
+			        Results[Position] = 3,
+			        ALL ( Races )
+			    )
+			VAR P1Name = MAXX ( PodiumP1, [name] )
+			VAR P1ConId = MAXX ( PodiumP1, [constructorId] )
+			VAR P1Team = LOOKUPVALUE ( Constructors[ConstructorName], Constructors[ConstructorId], P1ConId )
+			VAR P1Color = LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], P1ConId )
+			VAR P1Code = MAXX ( PodiumP1, [code] )
+			VAR P1Number = MAXX ( PodiumP1, [number] )
+			VAR P1Time = MAXX ( PodiumP1, [time] )
+			
+			VAR P2Name = MAXX ( PodiumP2, [name] )
+			VAR P2ConId = MAXX ( PodiumP2, [constructorId] )
+			VAR P2Team = LOOKUPVALUE ( Constructors[ConstructorName], Constructors[ConstructorId], P2ConId )
+			VAR P2Color = LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], P2ConId )
+			VAR P2Code = MAXX ( PodiumP2, [code] )
+			VAR P2Number = MAXX ( PodiumP2, [number] )
+			VAR P2Time = MAXX ( PodiumP2, [time] )
+			
+			VAR P3Name = MAXX ( PodiumP3, [name] )
+			VAR P3ConId = MAXX ( PodiumP3, [constructorId] )
+			VAR P3Team = LOOKUPVALUE ( Constructors[ConstructorName], Constructors[ConstructorId], P3ConId )
+			VAR P3Color = LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], P3ConId )
+			VAR P3Code = MAXX ( PodiumP3, [code] )
+			VAR P3Number = MAXX ( PodiumP3, [number] )
+			VAR P3Time = MAXX ( PodiumP3, [time] )
+			
+			// ---------- FULL RESULTS TABLE ----------
+			VAR ResultsRows =
+			    CALCULATETABLE (
+			        SUMMARIZE (
+			            Results,
+			            Results[DriverId],
+			            Results[ConstructorId],
+			            Results[Position],
+			            Results[PositionText],
+			            Results[Points],
+			            Results[Grid],
+			            Results[Laps],
+			            Results[Status],
+			            Results[FLRank]
+			        ),
+			        Results[Round] = EffectiveRound,
+			        ALL ( Races )
+			    )
+			VAR ResultsEnriched =
+			    ADDCOLUMNS (
+			        ResultsRows,
+			        "@Name",
+			            LOOKUPVALUE ( Drivers[DriverName], Drivers[DriverId], Results[DriverId] ),
+			        "@Code",
+			            LOOKUPVALUE ( Drivers[DriverCode], Drivers[DriverId], Results[DriverId] ),
+			        "@TeamName",
+			            LOOKUPVALUE ( Constructors[ConstructorName], Constructors[ConstructorId], Results[ConstructorId] ),
+			        "@Color",
+			            LOOKUPVALUE ( Constructors[TeamColor], Constructors[ConstructorId], Results[ConstructorId] ),
+			        "@SortKey",
+			            IF ( ISBLANK ( Results[Position] ), 99 + RAND (), Results[Position] * 1.0 ),
+			        "@PosDelta",
+			            IF ( NOT ISBLANK ( Results[Position] ), Results[Grid] - Results[Position], BLANK () )
+			    )
+			VAR ResultsRowsHTML =
+			    CONCATENATEX (
+			        ResultsEnriched,
+			        VAR DispPos = IF ( ISBLANK ( Results[Position] ), Results[PositionText], Results[Position] & "" )
+			        VAR PosDelta = [@PosDelta]
+			        VAR DeltaHTML =
+			            IF ( ISBLANK ( PosDelta ), "<span class='delta-none'>—</span>",
+			                IF ( PosDelta > 0,
+			                    "<span class='delta-up'>&#9650; " & PosDelta & "</span>",
+			                    IF ( PosDelta < 0,
+			                        "<span class='delta-down'>&#9660; " & ABS ( PosDelta ) & "</span>",
+			                        "<span class='delta-flat'>—</span>" ) ) )
+			        VAR FLBadge = IF ( Results[FLRank] = "1", "<span class='fl-badge'>FL</span>", "" )
+			        VAR DNFClass = IF ( ISBLANK ( Results[Position] ), " dnf", "" )
+			        VAR DelayMs = INT ( [@SortKey] ) * 30
+			        RETURN
+			            "<div class='rrow" & DNFClass & "' style='border-left:3px solid " & [@Color] & ";animation-delay:" & DelayMs & "ms'>"
+			                & "<div class='rpos'>" & DispPos & "</div>"
+			                & "<div class='rcode'>" & IF ( ISBLANK ( [@Code] ), "—", [@Code] ) & "</div>"
+			                & "<div class='rname'>"
+			                    & "<div class='rname-main'>" & [@Name] & FLBadge & "</div>"
+			                    & "<div class='rname-sub'>" & [@TeamName] & "</div>"
+			                & "</div>"
+			                & "<div class='rgrid'>P" & Results[Grid] & "</div>"
+			                & "<div class='rdelta'>" & DeltaHTML & "</div>"
+			                & "<div class='rlaps'>" & Results[Laps] & "</div>"
+			                & "<div class='rpts'>" & FORMAT ( Results[Points], "0" ) & "</div>"
+			                & "<div class='rstat'>" & Results[Status] & "</div>"
+			            & "</div>",
+			        "",
+			        [@SortKey], ASC
+			    )
+			
+			// ---------- ASSEMBLE HTML ----------
+			RETURN
+			"<style>"
+			& ".rdash *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}"
+			& ".rdash{display:grid;grid-template-columns:repeat(12,1fr);grid-gap:14px;padding:18px;background:#0a0a0d;min-height:100vh;color:#ffffff}"
+			
+			// ANIMATIONS
+			& "@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}"
+			& "@keyframes fadeInLeft{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}"
+			& "@keyframes podiumRise{from{opacity:0;transform:translateY(40px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}"
+			& "@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}"
+			& "@keyframes f1pulse{0%,100%{opacity:1}50%{opacity:0.4}}"
+			
+			// HEADER
+			& ".rdash .rhead{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-end;padding:6px 4px 16px;border-bottom:1px solid #2a2a30;animation:fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) backwards}"
+			& ".rdash .rh-left{display:flex;align-items:center;gap:14px}"
+			& ".rdash .rh-bar{width:5px;height:48px;background:#FF1801;border-radius:2px}"
+			& ".rdash .rh-titles .rh-rname{font-size:24px;font-weight:800;letter-spacing:-0.01em;color:#ffffff;line-height:1.1}"
+			& ".rdash .rh-titles .rh-meta{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#aaaaaa;margin-top:6px;font-weight:600}"
+			& ".rdash .rh-right{text-align:right;display:flex;gap:24px;align-items:center}"
+			& ".rdash .rh-stat{text-align:center}"
+			& ".rdash .rh-stat .v{font-size:24px;font-weight:800;color:#ffffff;line-height:1}"
+			& ".rdash .rh-stat .l{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#888888;margin-top:5px;font-weight:600}"
+			
+			// PODIUM
+			& ".rdash .podium-panel{grid-column:1/8;grid-row:2;background:linear-gradient(135deg,#15151a,#1a1a1f);border:1px solid #2a2a30;border-radius:8px;padding:24px;position:relative;overflow:hidden;animation:fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) backwards;animation-delay:0.1s}"
+			& ".rdash .podium-panel::before{content:'PODIUM';position:absolute;top:14px;left:18px;font-size:10px;letter-spacing:0.15em;color:#888888;font-weight:700}"
+			& ".rdash .podium{display:flex;align-items:flex-end;justify-content:center;gap:14px;height:280px;margin-top:20px}"
+			& ".rdash .pblock{display:flex;flex-direction:column;align-items:center;animation:podiumRise 0.7s cubic-bezier(0.16,1,0.3,1) backwards}"
+			& ".rdash .pblock.b1{animation-delay:0.5s}"
+			& ".rdash .pblock.b2{animation-delay:0.3s}"
+			& ".rdash .pblock.b3{animation-delay:0.4s}"
+			& ".rdash .pcard{text-align:center;margin-bottom:8px;min-width:140px}"
+			& ".rdash .pcard .pnum{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:900;color:#ffffff;display:inline-block;padding:4px 10px;border-radius:4px;margin-bottom:6px}"
+			& ".rdash .pcard .pn{font-size:14px;font-weight:700;color:#ffffff;line-height:1.2}"
+			& ".rdash .pcard .pt{font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-top:2px}"
+			& ".rdash .pcard .ptm{font-size:9px;color:#aaaaaa;margin-top:4px;font-family:'JetBrains Mono',monospace}"
+			& ".rdash .pstand{width:120px;color:#ffffff;font-size:48px;font-weight:900;display:flex;align-items:center;justify-content:center;border-radius:6px 6px 0 0;position:relative;overflow:hidden}"
+			& ".rdash .pstand::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);animation:shimmer 3s infinite;animation-delay:1.5s}"
+			& ".rdash .pstand.s1{height:200px;background:linear-gradient(180deg,#FFCC00,#E6B800)}"
+			& ".rdash .pstand.s2{height:150px;background:linear-gradient(180deg,#C0C0C0,#A8A8A8)}"
+			& ".rdash .pstand.s3{height:100px;background:linear-gradient(180deg,#CD7F32,#A0612A)}"
+			
+			// FACT CARDS
+			& ".rdash .facts-col{grid-column:8/13;grid-row:2;display:flex;flex-direction:column;gap:12px}"
+			& ".rdash .fact{background:#15151a;border:1px solid #2a2a30;border-radius:8px;padding:16px 18px;position:relative;overflow:hidden;animation:fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) backwards}"
+			& ".rdash .fact.f1{animation-delay:0.15s}"
+			& ".rdash .fact.f2{animation-delay:0.2s}"
+			& ".rdash .fact.f3{animation-delay:0.25s}"
+			& ".rdash .fact .accent{position:absolute;left:0;top:0;bottom:0;width:3px}"
+			& ".rdash .fact .flabel{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#888888;font-weight:700;margin-bottom:6px}"
+			& ".rdash .fact .fname{font-size:16px;font-weight:700;color:#ffffff;line-height:1.2}"
+			& ".rdash .fact .fdetail{font-size:11px;color:#aaaaaa;margin-top:4px;font-family:'JetBrains Mono',monospace}"
+			
+			// RESULTS TABLE
+			& ".rdash .results-panel{grid-column:1/-1;background:#15151a;border:1px solid #2a2a30;border-radius:8px;overflow:hidden;animation:fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) backwards;animation-delay:0.4s}"
+			& ".rdash .rp-head{padding:12px 16px;border-bottom:1px solid #2a2a30;display:flex;justify-content:space-between;align-items:center;background:#1a1a1f}"
+			& ".rdash .rp-head h2{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#cccccc;font-weight:700;margin:0;display:flex;align-items:center}"
+			& ".rdash .rp-head .accent-dot{width:8px;height:8px;background:#FF1801;border-radius:50%;display:inline-block;margin-right:8px;animation:f1pulse 2s infinite}"
+			& ".rdash .rp-head .rp-meta{font-size:10px;color:#888888}"
+			
+			& ".rdash .rt-head{display:grid;grid-template-columns:50px 60px 1fr 60px 60px 60px 60px 1.2fr;gap:12px;padding:10px 16px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#888888;font-weight:700;border-bottom:1px solid #2a2a30;background:#1a1a1f}"
+			& ".rdash .rt-head .h-c{text-align:center}"
+			& ".rdash .rt-head .h-r{text-align:right}"
+			
+			& ".rdash .rrow{display:grid;grid-template-columns:50px 60px 1fr 60px 60px 60px 60px 1.2fr;gap:12px;padding:10px 16px;align-items:center;border-bottom:1px solid #1f1f24;color:#ffffff;transition:background 0.15s,transform 0.15s;animation:fadeInLeft 0.4s ease-out backwards}"
+			& ".rdash .rrow:hover{background:#1f1f24;transform:translateX(2px)}"
+			& ".rdash .rrow.dnf{opacity:0.55}"
+			& ".rdash .rpos{font-weight:800;font-size:16px;text-align:center;color:#ffffff;font-variant-numeric:tabular-nums}"
+			& ".rdash .rcode{font-family:'JetBrains Mono',monospace;font-size:11px;color:#cccccc;letter-spacing:0.05em;background:#0a0a0d;padding:3px 6px;border-radius:3px;text-align:center}"
+			& ".rdash .rname{display:flex;flex-direction:column;gap:2px;min-width:0}"
+			& ".rdash .rname-main{font-size:13px;font-weight:600;color:#ffffff;display:flex;align-items:center;gap:6px}"
+			& ".rdash .rname-sub{font-size:10px;color:#aaaaaa;font-weight:500}"
+			& ".rdash .fl-badge{font-size:9px;font-weight:800;background:#9333EA;color:#ffffff;padding:1px 5px;border-radius:2px;letter-spacing:0.05em}"
+			& ".rdash .rgrid{font-size:11px;color:#aaaaaa;text-align:center;font-family:'JetBrains Mono',monospace}"
+			& ".rdash .rdelta{font-size:11px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}"
+			& ".rdash .delta-up{color:#22C55E}"
+			& ".rdash .delta-down{color:#EF4444}"
+			& ".rdash .delta-flat{color:#888888}"
+			& ".rdash .delta-none{color:#666666}"
+			& ".rdash .rlaps{font-size:11px;color:#aaaaaa;text-align:center;font-variant-numeric:tabular-nums}"
+			& ".rdash .rpts{font-size:14px;font-weight:800;color:#ffffff;text-align:right;font-variant-numeric:tabular-nums}"
+			& ".rdash .rstat{font-size:11px;color:#aaaaaa;text-align:left;font-style:italic}"
+			
+			& ".rdash .empty{padding:60px;text-align:center;color:#888888;font-size:13px}"
+			& "</style>"
+			
+			& "<div class='rdash'>"
+			
+			// HEADER
+			& "<div class='rhead'>"
+			    & "<div class='rh-left'>"
+			        & "<div class='rh-bar'></div>"
+			        & "<div class='rh-titles'>"
+			            & "<div class='rh-rname'>" & IF ( ISBLANK ( EffectiveRaceName ), "Select a race", EffectiveRaceName ) & "</div>"
+			            & "<div class='rh-meta'>ROUND " & EffectiveRound & " · " & UPPER ( IF ( ISBLANK ( EffectiveCountry ), "—", EffectiveCountry ) )
+			                & " · " & FORMAT ( EffectiveDate, "DD MMM YYYY" ) & "</div>"
+			        & "</div>"
+			    & "</div>"
+			    & "<div class='rh-right'>"
+			        & "<div class='rh-stat'><div class='v'>" & TotalLaps & "</div><div class='l'>Laps</div></div>"
+			        & "<div class='rh-stat'><div class='v'>" & DriversFinished & "</div><div class='l'>Finished</div></div>"
+			        & "<div class='rh-stat'><div class='v'>" & DriversDNF & "</div><div class='l'>DNFs</div></div>"
+			    & "</div>"
+			& "</div>"
+			
+			// PODIUM
+			& "<div class='podium-panel'>"
+			    & IF ( ISBLANK ( P1Name ),
+			        "<div class='empty' style='height:280px;display:flex;align-items:center;justify-content:center'>No race data available</div>",
+			        "<div class='podium'>"
+			            // P2
+			            & "<div class='pblock b2'>"
+			                & "<div class='pcard'>"
+			                    & "<div class='pnum' style='background:" & IF ( ISBLANK ( P2Color ), "#888", P2Color ) & "'>" & IF ( ISBLANK ( P2Number ), "—", P2Number ) & "</div>"
+			                    & "<div class='pn'>" & IF ( ISBLANK ( P2Name ), "—", P2Name ) & "</div>"
+			                    & "<div class='pt' style='color:" & IF ( ISBLANK ( P2Color ), "#aaa", P2Color ) & "'>" & IF ( ISBLANK ( P2Team ), "—", P2Team ) & "</div>"
+			                    & "<div class='ptm'>" & IF ( ISBLANK ( P2Time ), "", P2Time ) & "</div>"
+			                & "</div>"
+			                & "<div class='pstand s2'>2</div>"
+			            & "</div>"
+			            // P1
+			            & "<div class='pblock b1'>"
+			                & "<div class='pcard'>"
+			                    & "<div class='pnum' style='background:" & IF ( ISBLANK ( P1Color ), "#888", P1Color ) & "'>" & IF ( ISBLANK ( P1Number ), "—", P1Number ) & "</div>"
+			                    & "<div class='pn'>" & IF ( ISBLANK ( P1Name ), "—", P1Name ) & "</div>"
+			                    & "<div class='pt' style='color:" & IF ( ISBLANK ( P1Color ), "#aaa", P1Color ) & "'>" & IF ( ISBLANK ( P1Team ), "—", P1Team ) & "</div>"
+			                    & "<div class='ptm'>" & IF ( ISBLANK ( P1Time ), "", P1Time ) & "</div>"
+			                & "</div>"
+			                & "<div class='pstand s1'>1</div>"
+			            & "</div>"
+			            // P3
+			            & "<div class='pblock b3'>"
+			                & "<div class='pcard'>"
+			                    & "<div class='pnum' style='background:" & IF ( ISBLANK ( P3Color ), "#888", P3Color ) & "'>" & IF ( ISBLANK ( P3Number ), "—", P3Number ) & "</div>"
+			                    & "<div class='pn'>" & IF ( ISBLANK ( P3Name ), "—", P3Name ) & "</div>"
+			                    & "<div class='pt' style='color:" & IF ( ISBLANK ( P3Color ), "#aaa", P3Color ) & "'>" & IF ( ISBLANK ( P3Team ), "—", P3Team ) & "</div>"
+			                    & "<div class='ptm'>" & IF ( ISBLANK ( P3Time ), "", P3Time ) & "</div>"
+			                & "</div>"
+			                & "<div class='pstand s3'>3</div>"
+			            & "</div>"
+			        & "</div>"
+			    )
+			& "</div>"
+			
+			// FACT CARDS
+			& "<div class='facts-col'>"
+			    & "<div class='fact f1'>"
+			        & "<div class='accent' style='background:" & IF ( ISBLANK ( FLTeamColor ), "#9333EA", FLTeamColor ) & "'></div>"
+			        & "<div class='flabel'>Fastest Lap</div>"
+			        & "<div class='fname'>" & IF ( ISBLANK ( FLDriver ), "—", FLDriver ) & "</div>"
+			        & "<div class='fdetail'>" & IF ( ISBLANK ( FLTime ), "—", FLTime ) & " · LAP " & IF ( ISBLANK ( FLLap ), "—", FLLap ) & "</div>"
+			    & "</div>"
+			    & "<div class='fact f2'>"
+			        & "<div class='accent' style='background:#22C55E'></div>"
+			        & "<div class='flabel'>Pole Position</div>"
+			        & "<div class='fname'>" & IF ( ISBLANK ( PoleDriver ), "—", PoleDriver ) & "</div>"
+			        & "<div class='fdetail'>STARTED P1</div>"
+			    & "</div>"
+			    & "<div class='fact f3'>"
+			        & "<div class='accent' style='background:#3671C6'></div>"
+			        & "<div class='flabel'>Circuit</div>"
+			        & "<div class='fname'>" & IF ( ISBLANK ( EffectiveCircuit ), "—", EffectiveCircuit ) & "</div>"
+			        & "<div class='fdetail'>" & UPPER ( IF ( ISBLANK ( EffectiveCity ), "—", EffectiveCity ) ) & ", " & UPPER ( IF ( ISBLANK ( EffectiveCountry ), "—", EffectiveCountry ) ) & "</div>"
+			    & "</div>"
+			& "</div>"
+			
+			// FULL RESULTS TABLE
+			& "<div class='results-panel'>"
+			    & "<div class='rp-head'>"
+			        & "<h2><span class='accent-dot'></span>Full Results</h2>"
+			        & "<span class='rp-meta'>20 ENTRIES</span>"
+			    & "</div>"
+			    & "<div class='rt-head'>"
+			        & "<div class='h-c'>POS</div>"
+			        & "<div class='h-c'>CODE</div>"
+			        & "<div>DRIVER</div>"
+			        & "<div class='h-c'>GRID</div>"
+			        & "<div class='h-c'>+/-</div>"
+			        & "<div class='h-c'>LAPS</div>"
+			        & "<div class='h-r'>PTS</div>"
+			        & "<div>STATUS</div>"
+			    & "</div>"
+			    & IF ( ISBLANK ( ResultsRowsHTML ),
+			        "<div class='empty'>No race data for this round.</div>",
+			        ResultsRowsHTML )
+			& "</div>"
+			
+			& "</div>"
+		lineageTag: 25a720c9-9a08-44ee-979d-79f3302d8561
 
 	column Column
 		dataType: string

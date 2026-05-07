@@ -24,6 +24,9 @@ table Races
 		lineageTag: 9c5b2243-da25-4548-a8ec-084703d90950
 		summarizeBy: none
 		sourceColumn: RaceName
+		sortByColumn: Round
+
+		changedProperty = SortByColumn
 
 		annotation SummarizationSetBy = Automatic
 
