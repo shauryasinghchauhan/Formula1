@@ -1,0 +1,266 @@
+table Results
+	lineageTag: aa76babd-fb7f-4dd7-a81a-d8472992abc9
+
+	column Season
+		dataType: int64
+		formatString: 0
+		lineageTag: 98e7711e-3b1b-4f89-a75b-893583253f46
+		summarizeBy: sum
+		sourceColumn: Season
+
+		annotation SummarizationSetBy = Automatic
+
+	column Round
+		dataType: int64
+		formatString: 0
+		lineageTag: 62fe39c9-29db-426e-b97c-c551cb6b9cd0
+		summarizeBy: none
+		sourceColumn: Round
+
+		annotation SummarizationSetBy = Automatic
+
+	column RaceName
+		dataType: string
+		lineageTag: 1a8f90df-6055-41ae-8a46-9551d491961f
+		summarizeBy: none
+		sourceColumn: RaceName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: fa2f4efc-0aa7-41f2-ba75-941825dddf64
+		summarizeBy: none
+		sourceColumn: Date
+
+		variation Variation
+			isDefault
+			relationship: f6cd6979-89b8-474f-b0f0-8ae278b4cc55
+			defaultHierarchy: LocalDateTable_37b84902-a8eb-4dc2-abbb-dbbe643e9107.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DriverNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 7a53979d-7ca4-479c-b1eb-ca620ae78321
+		summarizeBy: none
+		sourceColumn: DriverNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column Position
+		dataType: int64
+		formatString: 0
+		lineageTag: 5ddb7edf-90d3-45ff-9f2a-d4cad8f1306b
+		summarizeBy: sum
+		sourceColumn: Position
+
+		annotation SummarizationSetBy = Automatic
+
+	column PositionText
+		dataType: string
+		lineageTag: 59ecaf04-4c09-4a4e-8adb-fb02da27383b
+		summarizeBy: none
+		sourceColumn: PositionText
+
+		annotation SummarizationSetBy = Automatic
+
+	column Points
+		dataType: double
+		lineageTag: f2d0b044-1916-49d4-aeb1-940c735dbba1
+		summarizeBy: sum
+		sourceColumn: Points
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column DriverId
+		dataType: string
+		lineageTag: e8674bfb-799d-4f17-9fc1-095d51c1b553
+		summarizeBy: none
+		sourceColumn: DriverId
+
+		annotation SummarizationSetBy = Automatic
+
+	column DriverCode
+		dataType: string
+		lineageTag: 4f127059-fd96-4dad-8542-11ebfff5ddd6
+		summarizeBy: none
+		sourceColumn: DriverCode
+
+		annotation SummarizationSetBy = Automatic
+
+	column GivenName
+		dataType: string
+		lineageTag: f8cd1256-5f93-4ccf-bb98-484d5dca8f2a
+		summarizeBy: none
+		sourceColumn: GivenName
+
+		annotation SummarizationSetBy = Automatic
+
+	column FamilyName
+		dataType: string
+		lineageTag: 76b54968-1aad-4b15-a50f-530578dbef50
+		summarizeBy: none
+		sourceColumn: FamilyName
+
+		annotation SummarizationSetBy = Automatic
+
+	column DriverNationality
+		dataType: string
+		lineageTag: ce8f302c-1f83-470a-b733-a22389c986de
+		summarizeBy: none
+		sourceColumn: DriverNationality
+
+		annotation SummarizationSetBy = Automatic
+
+	column ConstructorId
+		dataType: string
+		lineageTag: 7cc80661-317b-41d2-b2a1-7f8ccb0cf049
+		summarizeBy: none
+		sourceColumn: ConstructorId
+
+		annotation SummarizationSetBy = Automatic
+
+	column ConstructorName
+		dataType: string
+		lineageTag: 9198de43-c882-4ee8-874a-d5e19e8c35d2
+		summarizeBy: none
+		sourceColumn: ConstructorName
+
+		annotation SummarizationSetBy = Automatic
+
+	column ConstructorNationality
+		dataType: string
+		lineageTag: 99c0d616-c664-4d04-b1bb-59b2504603b3
+		summarizeBy: none
+		sourceColumn: ConstructorNationality
+
+		annotation SummarizationSetBy = Automatic
+
+	column Grid
+		dataType: int64
+		formatString: 0
+		lineageTag: 771ba77a-f799-473f-9201-f582e144df28
+		summarizeBy: sum
+		sourceColumn: Grid
+
+		annotation SummarizationSetBy = Automatic
+
+	column Laps
+		dataType: int64
+		formatString: 0
+		lineageTag: 7bebb837-b77b-4776-a36a-3bb23c935b6d
+		summarizeBy: sum
+		sourceColumn: Laps
+
+		annotation SummarizationSetBy = Automatic
+
+	column Status
+		dataType: string
+		lineageTag: 126c6baf-1562-4f68-8251-9aea025f8a18
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column RaceTime
+		dataType: string
+		lineageTag: 6fa985d4-129d-4643-abd2-089f171ef8bd
+		summarizeBy: none
+		sourceColumn: RaceTime
+
+		annotation SummarizationSetBy = Automatic
+
+	column FLRank
+		dataType: string
+		lineageTag: c87ea345-b603-4df4-95cf-5d6b83ee2037
+		summarizeBy: none
+		sourceColumn: FLRank
+
+		annotation SummarizationSetBy = Automatic
+
+	column FLLap
+		dataType: string
+		lineageTag: e80b10ab-16ec-436c-b71a-3c252ef70cbd
+		summarizeBy: none
+		sourceColumn: FLLap
+
+		annotation SummarizationSetBy = Automatic
+
+	column FLTime
+		dataType: string
+		lineageTag: 97b41451-bbb9-4ae8-9e0d-e45671aca599
+		summarizeBy: none
+		sourceColumn: FLTime
+
+		annotation SummarizationSetBy = Automatic
+
+	column DriverName
+		dataType: string
+		lineageTag: f2cdaae1-3db5-4848-bf44-28bb64c429fb
+		summarizeBy: none
+		sourceColumn: DriverName
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Results = m
+		mode: import
+		source =
+				// Query: Results
+				// Purpose: Main fact table — one row per driver per race.
+				// Source: Jolpica Ergast mirror — /2026/results.json
+				// Notes:
+				//   - Status field includes "Finished", "+1 Lap" (counts as classified), DNF reasons
+				//   - FastestLap fields are blank for early-season races where no FL bonus point applies
+				//   - Position is blank for DNFs; PositionText carries "R" (retired), "D" (disqualified), etc.
+				
+				let
+				    Source = Json.Document(Web.Contents("https://api.jolpi.ca/ergast/f1/2026/results.json?limit=1000")),
+				    Races = Source[MRData][RaceTable][Races],
+				    ToTable = Table.FromList(Races, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+				    ExpandRace = Table.ExpandRecordColumn(ToTable, "Column1",
+				        {"season", "round", "raceName", "date", "Results"},
+				        {"Season", "Round", "RaceName", "Date", "Results"}),
+				    ExpandResults = Table.ExpandListColumn(ExpandRace, "Results"),
+				    ExpandResultRecord = Table.ExpandRecordColumn(ExpandResults, "Results",
+				        {"number", "position", "positionText", "points", "Driver", "Constructor",
+				         "grid", "laps", "status", "Time", "FastestLap"},
+				        {"DriverNumber", "Position", "PositionText", "Points", "Driver", "Constructor",
+				         "Grid", "Laps", "Status", "RaceTime", "FastestLap"}),
+				    ExpandDriver = Table.ExpandRecordColumn(ExpandResultRecord, "Driver",
+				        {"driverId", "code", "givenName", "familyName", "nationality"},
+				        {"DriverId", "DriverCode", "GivenName", "FamilyName", "DriverNationality"}),
+				    ExpandConstructor = Table.ExpandRecordColumn(ExpandDriver, "Constructor",
+				        {"constructorId", "name", "nationality"},
+				        {"ConstructorId", "ConstructorName", "ConstructorNationality"}),
+				    ExpandFL = Table.ExpandRecordColumn(ExpandConstructor, "FastestLap",
+				        {"rank", "lap", "Time"},
+				        {"FLRank", "FLLap", "FLTimeRecord"}),
+				    ExpandFLTime = Table.ExpandRecordColumn(ExpandFL, "FLTimeRecord",
+				        {"time"},
+				        {"FLTime"}),
+				    AddDriverName = Table.AddColumn(ExpandFLTime, "DriverName",
+				        each [GivenName] & " " & [FamilyName], type text),
+				    Typed = Table.TransformColumnTypes(AddDriverName, {
+				        {"Season", Int64.Type},
+				        {"Round", Int64.Type},
+				        {"Position", Int64.Type},
+				        {"Points", type number},
+				        {"Grid", Int64.Type},
+				        {"Laps", Int64.Type},
+				        {"DriverNumber", Int64.Type},
+				        {"Date", type date}
+				    })
+				in
+				    Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

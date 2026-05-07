@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Formula 1 Season Tracker"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "42e6fbe0-ee04-4185-a053-c0d51fea57d6"
+  }
+}

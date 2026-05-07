@@ -1,0 +1,140 @@
+table Races
+	lineageTag: 0f691953-ea3b-4656-9aed-fee4f6195907
+
+	column Season
+		dataType: int64
+		formatString: 0
+		lineageTag: 09051236-9e0c-4143-b65a-03d2b1cdca94
+		summarizeBy: sum
+		sourceColumn: Season
+
+		annotation SummarizationSetBy = Automatic
+
+	column Round
+		dataType: int64
+		formatString: 0
+		lineageTag: 972edbb6-6f2e-47be-9647-6712d3e17330
+		summarizeBy: none
+		sourceColumn: Round
+
+		annotation SummarizationSetBy = Automatic
+
+	column RaceName
+		dataType: string
+		lineageTag: 9c5b2243-da25-4548-a8ec-084703d90950
+		summarizeBy: none
+		sourceColumn: RaceName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 7f361ca6-7091-4451-9b0e-4a43f3b7c6cd
+		summarizeBy: none
+		sourceColumn: Date
+
+		variation Variation
+			isDefault
+			relationship: 4f2c56cb-49d7-475e-8abf-da85f19f3a02
+			defaultHierarchy: LocalDateTable_2d77bc9e-0fdc-466b-8f2a-9bea8fbb5677.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Time
+		dataType: string
+		lineageTag: 62300221-ffe4-4ecd-8b7c-187b6ff1b18f
+		summarizeBy: none
+		sourceColumn: Time
+
+		annotation SummarizationSetBy = Automatic
+
+	column CircuitId
+		dataType: string
+		lineageTag: 31f662de-fd0c-41c9-bf39-4a924cc9dba9
+		summarizeBy: none
+		sourceColumn: CircuitId
+
+		annotation SummarizationSetBy = Automatic
+
+	column CircuitName
+		dataType: string
+		lineageTag: 2efd1843-2491-4a76-b616-1134f9a305c7
+		summarizeBy: none
+		sourceColumn: CircuitName
+
+		annotation SummarizationSetBy = Automatic
+
+	column City
+		dataType: string
+		lineageTag: edcf848f-8edc-435b-b265-611b59c686df
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		lineageTag: ae8a8979-8d5a-4289-9f95-f52b27db76fc
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lat
+		dataType: double
+		lineageTag: 3a86e98a-8960-45ea-bf8a-b85edbb23115
+		summarizeBy: sum
+		sourceColumn: Lat
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Long
+		dataType: double
+		lineageTag: 83293392-dc0d-4a07-9c31-9f41beadbd15
+		summarizeBy: sum
+		sourceColumn: Long
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Races = m
+		mode: import
+		source =
+				// Query: Races
+				// Purpose: Race schedule dimension table for the 2026 season.
+				// Source: Jolpica Ergast mirror — /2026/races.json
+				// Refresh cadence: Once per week is fine; schedule rarely changes mid-season.
+				
+				let
+				    Source = Json.Document(Web.Contents("https://api.jolpi.ca/ergast/f1/2026/races.json?limit=1000")),
+				    Races = Source[MRData][RaceTable][Races],
+				    ToTable = Table.FromList(Races, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+				    Expanded = Table.ExpandRecordColumn(ToTable, "Column1",
+				        {"season", "round", "raceName", "date", "time", "Circuit"},
+				        {"Season", "Round", "RaceName", "Date", "Time", "Circuit"}),
+				    ExpandCircuit = Table.ExpandRecordColumn(Expanded, "Circuit",
+				        {"circuitId", "circuitName", "Location"},
+				        {"CircuitId", "CircuitName", "Location"}),
+				    ExpandLocation = Table.ExpandRecordColumn(ExpandCircuit, "Location",
+				        {"locality", "country", "lat", "long"},
+				        {"City", "Country", "Lat", "Long"}),
+				    Typed = Table.TransformColumnTypes(ExpandLocation, {
+				        {"Season", Int64.Type},
+				        {"Round", Int64.Type},
+				        {"Date", type date},
+				        {"Lat", type number},
+				        {"Long", type number}
+				    })
+				in
+				    Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,26 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-IN
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["Races","Results","Qualifying","CurrentRound","MaxRound","StandingsSnapshot","Drivers","Constructors"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table Races
+ref table DateTableTemplate_9b412840-c04d-422e-b6ee-b6b1254bf22e
+ref table LocalDateTable_2d77bc9e-0fdc-466b-8f2a-9bea8fbb5677
+ref table Results
+ref table LocalDateTable_37b84902-a8eb-4dc2-abbb-dbbe643e9107
+ref table Qualifying
+ref table StandingsSnapshot
+ref table Drivers
+ref table Constructors
+
+ref cultureInfo en-US
+

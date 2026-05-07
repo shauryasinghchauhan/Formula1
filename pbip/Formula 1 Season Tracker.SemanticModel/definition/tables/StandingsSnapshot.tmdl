@@ -1,0 +1,103 @@
+table StandingsSnapshot
+	lineageTag: 05dd4230-2550-44c7-a3a2-bb4b7f9b48c2
+
+	column Round
+		dataType: int64
+		formatString: 0
+		lineageTag: 3398d1ac-4925-4bf9-abaa-a65972b07229
+		summarizeBy: none
+		sourceColumn: Round
+
+		annotation SummarizationSetBy = Automatic
+
+	column Position
+		dataType: int64
+		formatString: 0
+		lineageTag: 9aa3be6a-3a24-4197-8e2c-0fc87a4813aa
+		summarizeBy: sum
+		sourceColumn: Position
+
+		annotation SummarizationSetBy = Automatic
+
+	column Points
+		dataType: double
+		lineageTag: 37ba7ba5-5a6c-4d33-94bc-53e4e610935c
+		summarizeBy: sum
+		sourceColumn: Points
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Wins
+		dataType: int64
+		formatString: 0
+		lineageTag: e12ef863-bd8f-47ca-b79f-d0493782f1cc
+		summarizeBy: sum
+		sourceColumn: Wins
+
+		annotation SummarizationSetBy = Automatic
+
+	column DriverId
+		dataType: string
+		lineageTag: a34213f3-908f-4fab-9ccc-d6a7dcb7eee6
+		summarizeBy: none
+		sourceColumn: DriverId
+
+		annotation SummarizationSetBy = Automatic
+
+	column ConstructorId
+		dataType: string
+		lineageTag: 8cb4a1e2-b9ce-449d-9ed6-3084d2113456
+		summarizeBy: none
+		sourceColumn: ConstructorId
+
+		annotation SummarizationSetBy = Automatic
+
+	partition StandingsSnapshot = m
+		mode: import
+		source =
+				// Query: StandingsSnapshot
+				// Purpose: Driver standings AS OF each round. Powers the championship progression line chart.
+				// Source: Jolpica Ergast mirror — /2026/{round}/driverStandings.json (called once per round)
+				//
+				// PARAMETER REQUIRED: This query depends on a parameter named `MaxRound` (Int64)
+				// Set it to the number of completed rounds. Default to 1 at season start.
+				// The helper query CurrentRound.pq can derive this dynamically.
+				
+				let
+				    GetRoundStandings = (round as number) =>
+				        let
+				            url = "https://api.jolpi.ca/ergast/f1/2026/" & Number.ToText(round) & "/driverStandings.json",
+				            Source = Json.Document(Web.Contents(url)),
+				            Lists = Source[MRData][StandingsTable][StandingsLists],
+				            Result = if List.Count(Lists) = 0 then null else Lists{0}[DriverStandings]
+				        in
+				            Result,
+				    Rounds = List.Numbers(1, MaxRound),
+				    AllStandings = List.Transform(Rounds, each [Round = _, Standings = GetRoundStandings(_)]),
+				    ToTable = Table.FromRecords(AllStandings),
+				    FilterNonNull = Table.SelectRows(ToTable, each [Standings] <> null),
+				    ExpandStandings = Table.ExpandListColumn(FilterNonNull, "Standings"),
+				    ExpandRecord = Table.ExpandRecordColumn(ExpandStandings, "Standings",
+				        {"position", "points", "wins", "Driver", "Constructors"},
+				        {"Position", "Points", "Wins", "Driver", "Constructors"}),
+				    ExpandDriver = Table.ExpandRecordColumn(ExpandRecord, "Driver",
+				        {"driverId"},
+				        {"DriverId"}),
+				    GetTeam = Table.AddColumn(ExpandDriver, "ConstructorId",
+				        each try [Constructors]{0}[constructorId] otherwise null, type text),
+				    Cleaned = Table.RemoveColumns(GetTeam, {"Constructors"}),
+				    Typed = Table.TransformColumnTypes(Cleaned, {
+				        {"Round", Int64.Type},
+				        {"Position", Int64.Type},
+				        {"Points", type number},
+				        {"Wins", Int64.Type}
+				    })
+				in
+				    Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

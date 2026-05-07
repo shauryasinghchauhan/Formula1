@@ -1,0 +1,81 @@
+table Constructors
+	lineageTag: f61062f5-7a85-4a0f-91b6-48700a3dcef4
+
+	column ConstructorId
+		dataType: string
+		lineageTag: e5d0617b-0eaf-47a9-b148-a39921426054
+		summarizeBy: none
+		sourceColumn: ConstructorId
+
+		annotation SummarizationSetBy = Automatic
+
+	column ConstructorName
+		dataType: string
+		lineageTag: 1839a82f-8633-4ff2-9a2e-b464ad7876e5
+		summarizeBy: none
+		sourceColumn: ConstructorName
+
+		annotation SummarizationSetBy = Automatic
+
+	column ConstructorNationality
+		dataType: string
+		lineageTag: ab0135d9-3308-45a4-b61a-19b422b319e5
+		summarizeBy: none
+		sourceColumn: ConstructorNationality
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamColor
+		dataType: string
+		lineageTag: 2f5296c4-6349-4af6-8ba4-accb5fddeca7
+		summarizeBy: none
+		sourceColumn: TeamColor
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamColorSecondary
+		dataType: string
+		lineageTag: 1c4bba44-ad29-45d7-8344-27a581a7eef8
+		summarizeBy: none
+		sourceColumn: TeamColorSecondary
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Constructors = m
+		mode: import
+		source =
+				// Query: Constructors
+				// Purpose: Constructors dimension with team color hex codes for HTML visuals.
+				// Maintenance: Update TeamColor mapping when teams rebrand or new teams enter.
+				// 2026 watch list: Audi (Sauber rebrand), Cadillac (new entry).
+				
+				let
+				    Source = Results,
+				    Selected = Table.SelectColumns(Source,
+				        {"ConstructorId", "ConstructorName", "ConstructorNationality"}),
+				    Distinct = Table.Distinct(Selected),
+				    AddColors = Table.AddColumn(Distinct, "TeamColor", each
+				        if [ConstructorId] = "ferrari" then "#E80020"
+				        else if [ConstructorId] = "mercedes" then "#27F4D2"
+				        else if [ConstructorId] = "red_bull" then "#3671C6"
+				        else if [ConstructorId] = "mclaren" then "#FF8000"
+				        else if [ConstructorId] = "aston_martin" then "#229971"
+				        else if [ConstructorId] = "alpine" then "#FF87BC"
+				        else if [ConstructorId] = "williams" then "#64C4FF"
+				        else if [ConstructorId] = "rb" then "#6692FF"
+				        else if [ConstructorId] = "sauber" then "#52E252"
+				        else if [ConstructorId] = "audi" then "#52E252"            // 2026: Audi rebrand TBC
+				        else if [ConstructorId] = "haas" then "#B6BABD"
+				        else if [ConstructorId] = "cadillac" then "#FFCC00"        // 2026: new entry, color TBC
+				        else "#777777", type text),
+				    AddSecondary = Table.AddColumn(AddColors, "TeamColorSecondary", each
+				        if [ConstructorId] = "ferrari" then "#FFFFFF"
+				        else if [ConstructorId] = "mercedes" then "#000000"
+				        else "#FFFFFF", type text)
+				in
+				    AddSecondary
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
