@@ -8,7 +8,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["Races","Results","Qualifying","CurrentRound","MaxRound","StandingsSnapshot","Drivers","Constructors"]
+annotation PBI_QueryOrder = ["Races","Results","Qualifying","CurrentRound","MaxRound","StandingsSnapshot","Drivers","Constructors","_Measures"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
@@ -21,6 +21,7 @@ ref table Qualifying
 ref table StandingsSnapshot
 ref table Drivers
 ref table Constructors
+ref table _Measures
 
 ref cultureInfo en-US
 

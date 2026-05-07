@@ -1,0 +1,449 @@
+table _Measures
+	lineageTag: 2480487f-24b9-4f80-8fe3-6ee3d2e8868b
+
+	measure 'Total Points' =
+			
+			SUM ( Results[Points] )
+		lineageTag: 5ec13562-e54a-4dcc-9a18-3311aa766a41
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Podiums =
+			
+			CALCULATE (
+			    COUNTROWS ( Results ),
+			    Results[Position] <= 3
+			)
+		formatString: 0
+		lineageTag: 1ebea7c0-964f-4f05-9f0c-6b316d0da5ec
+
+	measure 'Avg Grid Position' =
+			
+			AVERAGE ( Results[Grid] )
+		formatString: 0
+		lineageTag: 43778a84-d5cb-43ec-bd2e-4d95032be4ae
+
+	measure 'Fastest Laps' =
+			
+			CALCULATE (
+			    COUNTROWS ( Results ),
+			    Results[FLRank] = "1"
+			)
+		formatString: 0
+		lineageTag: 3e045b0c-89f6-45b9-a8df-a130a48de746
+
+	measure 'Race Wins' =
+			
+			CALCULATE (
+			    COUNTROWS ( Results ),
+			    Results[Position] = 1
+			)
+		formatString: 0
+		lineageTag: 5a9a0f7b-9716-4fd6-ae6b-72f5cc93ba0d
+
+	measure 'Points Finishes' =
+			
+			CALCULATE (
+			    COUNTROWS ( Results ),
+			    Results[Points] > 0
+			)
+		formatString: 0
+		lineageTag: 505bd589-1cda-4976-9fb2-556f549869c8
+
+	measure DNFs =
+			
+			CALCULATE (
+			    COUNTROWS ( Results ),
+			    NOT ( Results[Status] IN { "Finished" } ),
+			    NOT ( CONTAINSSTRING ( Results[Status], "Lap" ) )
+			)
+		formatString: 0
+		lineageTag: 8a39ca34-34a8-4fa5-a4f3-01477daad804
+
+	measure 'Avg Finish Position' =
+			
+			AVERAGEX (
+			    FILTER ( Results, NOT ISBLANK ( Results[Position] ) ),
+			    Results[Position]
+			)
+		lineageTag: 29c07833-91cb-40e6-beeb-02a682ec38ee
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pole Positions' =
+			
+			CALCULATE (
+			    COUNTROWS ( Qualifying ),
+			    Qualifying[QualiPosition] = 1
+			)
+		formatString: 0
+		lineageTag: ec496b02-87f8-4c04-930b-d8fd844e6a36
+
+	measure 'Current Championship Position' =
+			
+			VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
+			VAR LatestRound =
+			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+			RETURN
+			    CALCULATE (
+			        MAX ( StandingsSnapshot[Position] ),
+			        StandingsSnapshot[DriverId] = CurrentDriver,
+			        StandingsSnapshot[Round] = LatestRound
+			    )
+		formatString: 0
+		lineageTag: 8b5baa41-60dd-45c0-abd7-3e630cd10efd
+
+	measure 'Points Gap to Leader' =
+			
+			VAR LatestRound =
+			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+			VAR LeaderPoints =
+			    CALCULATE (
+			        MAX ( StandingsSnapshot[Points] ),
+			        StandingsSnapshot[Position] = 1,
+			        StandingsSnapshot[Round] = LatestRound,
+			        ALL ( Drivers )
+			    )
+			VAR DriverPoints = [Total Points]
+			RETURN
+			    LeaderPoints - DriverPoints
+		lineageTag: 2bab97c6-4f01-4aad-ab60-bce962269eda
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Races Remaining' =
+			
+			VAR Today = TODAY ()
+			VAR Total = CALCULATE ( DISTINCTCOUNT ( Races[Round] ), ALL ( Races ) )
+			VAR Completed =
+			    CALCULATE (
+			        DISTINCTCOUNT ( Races[Round] ),
+			        Races[Date] < Today,
+			        ALL ( Races )
+			    )
+			RETURN
+			    Total - Completed
+		formatString: 0
+		lineageTag: 4531ba26-3120-49d1-8325-2e474ac907e0
+
+	measure 'Points Available' =
+			
+			VAR Remaining = [Races Remaining]
+			VAR SprintCount = 6                          // adjust per actual 2026 calendar
+			VAR SprintRemaining =
+			    MAX ( 0, SprintCount - DIVIDE ( Remaining, 4 ) )    // rough estimate
+			RETURN
+			    Remaining * 25 + SprintRemaining * 8
+		lineageTag: c7142754-7399-4af0-8f18-7dbe1b04fdff
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Title Mathematically Clinched' =
+			
+			VAR Pos = [Current Championship Position]
+			VAR Gap = -1 * [Points Gap to Leader]    // positive number = leader's lead
+			VAR Available = [Points Available]
+			RETURN
+			    IF ( Pos = 1 && Gap > Available, "Yes", "No" )
+		lineageTag: c046190f-97ff-4b57-b46e-c87cf10cae07
+
+	measure 'Last 3 Races Points' =
+			
+			VAR LatestRound =
+			    CALCULATE ( MAX ( Results[Round] ), ALL ( Results ) )
+			RETURN
+			    CALCULATE (
+			        SUM ( Results[Points] ),
+			        Results[Round] >= LatestRound - 2,
+			        Results[Round] <= LatestRound
+			    )
+		lineageTag: 44dea100-1e1c-4f64-99d7-ebd5e17e8b1d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Position Change vs Last Race' =
+			
+			VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
+			VAR LatestRound =
+			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( Races ) )
+			VAR ThisPos =
+			    CALCULATE (
+			        MAX ( StandingsSnapshot[Position] ),
+			        StandingsSnapshot[Round] = LatestRound,
+			        StandingsSnapshot[DriverId] = CurrentDriver
+			    )
+			VAR PrevPos =
+			    CALCULATE (
+			        MAX ( StandingsSnapshot[Position] ),
+			        StandingsSnapshot[Round] = LatestRound - 1,
+			        StandingsSnapshot[DriverId] = CurrentDriver
+			    )
+			RETURN
+			    PrevPos - ThisPos
+		formatString: 0
+		lineageTag: 6ab0f7a4-6dde-4277-888e-08f3778b43e0
+
+	measure 'Form Arrow HTML' =
+			
+			VAR Change = [Position Change vs Last Race]
+			RETURN
+			    SWITCH (
+			        TRUE (),
+			        Change > 0, "<span style='color:#22c55e;'>&#9650; " & Change & "</span>",
+			        Change < 0, "<span style='color:#ef4444;'>&#9660; " & ABS ( Change ) & "</span>",
+			        "<span style='color:#888;'>—</span>"
+			    )
+		lineageTag: cb13fdee-6999-4661-80c7-ff957900301e
+
+	measure 'Cumulative Points' =
+			
+			VAR CurrentRound = MAX ( Races[Round] )
+			VAR CurrentDriver = SELECTEDVALUE ( Drivers[DriverId] )
+			RETURN
+			    CALCULATE (
+			        SUM ( Results[Points] ),
+			        Results[DriverId] = CurrentDriver,
+			        Results[Round] <= CurrentRound,
+			        ALL ( Races )
+			    )
+		lineageTag: f9951d27-5676-4171-98b3-60703db4e65c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Avg Quali Position' =
+			
+			AVERAGE ( Qualifying[QualiPosition] )
+		lineageTag: 5f9fb206-b631-4abc-8604-9675eb77b099
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Quali vs Race Delta' =
+			
+			VAR AvgQ = [Avg Quali Position]
+			VAR AvgR = [Avg Finish Position]
+			RETURN
+			    AvgQ - AvgR
+		lineageTag: 3326792e-b1a0-47a9-a9c9-27f88e7157de
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Teammate Race H2H Wins' =
+			
+			VAR ThisDriver = SELECTEDVALUE ( Drivers[DriverId] )
+			VAR ThisTeam =
+			    CALCULATE (
+			        SELECTEDVALUE ( Results[ConstructorId] ),
+			        Results[DriverId] = ThisDriver
+			    )
+			RETURN
+			    SUMX (
+			        VALUES ( Results[Round] ),
+			        VAR R = Results[Round]
+			        VAR MyPos =
+			            CALCULATE (
+			                MAX ( Results[Position] ),
+			                Results[DriverId] = ThisDriver,
+			                Results[Round] = R
+			            )
+			        VAR TeammatePos =
+			            CALCULATE (
+			                MAX ( Results[Position] ),
+			                Results[ConstructorId] = ThisTeam,
+			                Results[DriverId] <> ThisDriver,
+			                Results[Round] = R
+			            )
+			        RETURN
+			            IF (
+			                NOT ISBLANK ( MyPos )
+			                    && NOT ISBLANK ( TeammatePos )
+			                    && MyPos < TeammatePos,
+			                1,
+			                0
+			            )
+			    )
+		formatString: 0
+		lineageTag: 524b3634-e06f-40df-b215-99528597035d
+
+	measure 'Teammate Race H2H Losses' =
+			
+			VAR ThisDriver = SELECTEDVALUE ( Drivers[DriverId] )
+			VAR ThisTeam =
+			    CALCULATE (
+			        SELECTEDVALUE ( Results[ConstructorId] ),
+			        Results[DriverId] = ThisDriver
+			    )
+			RETURN
+			    SUMX (
+			        VALUES ( Results[Round] ),
+			        VAR R = Results[Round]
+			        VAR MyPos =
+			            CALCULATE (
+			                MAX ( Results[Position] ),
+			                Results[DriverId] = ThisDriver,
+			                Results[Round] = R
+			            )
+			        VAR TeammatePos =
+			            CALCULATE (
+			                MAX ( Results[Position] ),
+			                Results[ConstructorId] = ThisTeam,
+			                Results[DriverId] <> ThisDriver,
+			                Results[Round] = R
+			            )
+			        RETURN
+			            IF (
+			                NOT ISBLANK ( MyPos )
+			                    && NOT ISBLANK ( TeammatePos )
+			                    && MyPos > TeammatePos,
+			                1,
+			                0
+			            )
+			    )
+		formatString: 0
+		lineageTag: 13dc7ab5-c530-4190-b726-5eaf8b54f4c1
+
+	measure 'Teammate H2H Display' =
+			
+			[Teammate Race H2H Wins] & " - " & [Teammate Race H2H Losses]
+		lineageTag: 9a9e10ae-a18d-437f-8961-a20754c36027
+
+	measure 'Leaderboard HTML' =
+			
+			VAR LatestRound =
+			    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( StandingsSnapshot ) )
+			VAR LeaderPoints =
+			    CALCULATE (
+			        MAX ( StandingsSnapshot[Points] ),
+			        StandingsSnapshot[Round] = LatestRound,
+			        StandingsSnapshot[Position] = 1,
+			        ALL ( StandingsSnapshot )
+			    )
+			VAR SnapshotRows =
+			    CALCULATETABLE (
+			        SUMMARIZE (
+			            StandingsSnapshot,
+			            StandingsSnapshot[DriverId],
+			            StandingsSnapshot[ConstructorId],
+			            StandingsSnapshot[Position],
+			            StandingsSnapshot[Points]
+			        ),
+			        StandingsSnapshot[Round] = LatestRound,
+			        ALL ( StandingsSnapshot )
+			    )
+			VAR Enriched =
+			    ADDCOLUMNS (
+			        SnapshotRows,
+			        "@Name",
+			            LOOKUPVALUE (
+			                Drivers[DriverName],
+			                Drivers[DriverId], StandingsSnapshot[DriverId]
+			            ),
+			        "@Color",
+			            LOOKUPVALUE (
+			                Constructors[TeamColor],
+			                Constructors[ConstructorId], StandingsSnapshot[ConstructorId]
+			            )
+			    )
+			VAR Body =
+			    CONCATENATEX (
+			        Enriched,
+			        "<tr>"
+			            & "<td style='border-left:6px solid " & [@Color]
+			                & ";padding:8px 12px;font-weight:700;font-size:15px;'>"
+			                & StandingsSnapshot[Position] & "</td>"
+			            & "<td style='padding:8px 12px;'>" & [@Name] & "</td>"
+			            & "<td style='padding:8px 12px;text-align:right;font-weight:600;'>"
+			                & FORMAT ( StandingsSnapshot[Points], "0" ) & "</td>"
+			            & "<td style='padding:8px 12px;text-align:right;color:#888;font-size:13px;'>"
+			                & IF (
+			                    StandingsSnapshot[Position] = 1,
+			                    "—",
+			                    "-" & FORMAT ( LeaderPoints - StandingsSnapshot[Points], "0" )
+			                )
+			            & "</td>"
+			        & "</tr>",
+			        "",
+			        StandingsSnapshot[Position], ASC
+			    )
+			RETURN
+			    "<div style='font-family:Inter,system-ui,-apple-system,sans-serif;'>"
+			    & "<table style='width:100%;border-collapse:collapse;font-size:14px;'>"
+			    & "<thead><tr style='border-bottom:2px solid #333;color:#888;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;'>"
+			    & "<th style='padding:8px 12px;'>#</th>"
+			    & "<th style='padding:8px 12px;'>Driver</th>"
+			    & "<th style='padding:8px 12px;text-align:right;'>Pts</th>"
+			    & "<th style='padding:8px 12px;text-align:right;'>Gap</th>"
+			    & "</tr></thead>"
+			    & "<tbody>" & Body & "</tbody></table></div>"
+		lineageTag: a93ea180-b4ba-4a66-99d1-a96834e72fed
+
+	measure 'Podium HTML' =
+			
+			VAR P1 =
+			    CALCULATETABLE (
+			        ROW (
+			            "Name", SELECTEDVALUE ( Results[DriverName] ),
+			            "Color", SELECTEDVALUE ( Constructors[TeamColor] )
+			        ),
+			        Results[Position] = 1
+			    )
+			VAR P2 =
+			    CALCULATETABLE (
+			        ROW (
+			            "Name", SELECTEDVALUE ( Results[DriverName] ),
+			            "Color", SELECTEDVALUE ( Constructors[TeamColor] )
+			        ),
+			        Results[Position] = 2
+			    )
+			VAR P3 =
+			    CALCULATETABLE (
+			        ROW (
+			            "Name", SELECTEDVALUE ( Results[DriverName] ),
+			            "Color", SELECTEDVALUE ( Constructors[TeamColor] )
+			        ),
+			        Results[Position] = 3
+			    )
+			VAR P1Name = MAXX ( P1, [Name] )
+			VAR P1Color = MAXX ( P1, [Color] )
+			VAR P2Name = MAXX ( P2, [Name] )
+			VAR P2Color = MAXX ( P2, [Color] )
+			VAR P3Name = MAXX ( P3, [Name] )
+			VAR P3Color = MAXX ( P3, [Color] )
+			RETURN
+			    "<div style='display:flex;align-items:flex-end;justify-content:center;gap:8px;font-family:Inter,system-ui,sans-serif;padding:20px;'>"
+			    & "<div style='text-align:center;'>"
+			        & "<div style='font-size:13px;font-weight:600;margin-bottom:4px;'>" & P2Name & "</div>"
+			        & "<div style='background:" & P2Color & ";width:100px;height:80px;display:flex;align-items:center;justify-content:center;color:white;font-size:32px;font-weight:800;border-radius:4px 4px 0 0;'>2</div>"
+			    & "</div>"
+			    & "<div style='text-align:center;'>"
+			        & "<div style='font-size:14px;font-weight:700;margin-bottom:4px;'>" & P1Name & "</div>"
+			        & "<div style='background:" & P1Color & ";width:100px;height:120px;display:flex;align-items:center;justify-content:center;color:white;font-size:40px;font-weight:800;border-radius:4px 4px 0 0;'>1</div>"
+			    & "</div>"
+			    & "<div style='text-align:center;'>"
+			        & "<div style='font-size:13px;font-weight:600;margin-bottom:4px;'>" & P3Name & "</div>"
+			        & "<div style='background:" & P3Color & ";width:100px;height:60px;display:flex;align-items:center;justify-content:center;color:white;font-size:28px;font-weight:800;border-radius:4px 4px 0 0;'>3</div>"
+			    & "</div>"
+			    & "</div>"
+		lineageTag: f6907603-9967-439d-b0eb-5ac2ca2fb55a
+
+	column Column
+		dataType: string
+		isHidden
+		lineageTag: c0a436af-4228-4c5e-8543-adbb6127f5d1
+		summarizeBy: none
+		sourceColumn: Column
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Column", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+
