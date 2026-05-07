@@ -11,13 +11,13 @@
       "type": "SharedResources"
     },
     "customTheme": {
-      "name": "F1_Dark07418606794069327.json",
+      "name": "AccessibleDefault",
       "reportVersionAtImport": {
         "visual": "2.8.0",
         "report": "3.2.0",
         "page": "2.3.1"
       },
-      "type": "RegisteredResources"
+      "type": "SharedResources"
     }
   },
   "objects": {
@@ -44,20 +44,14 @@
       "type": "SharedResources",
       "items": [
         {
+          "name": "AccessibleDefault",
+          "path": "BuiltInThemes/AccessibleDefault.json",
+          "type": "CustomTheme"
+        },
+        {
           "name": "CY26SU04",
           "path": "BaseThemes/CY26SU04.json",
           "type": "BaseTheme"
-        }
-      ]
-    },
-    {
-      "name": "RegisteredResources",
-      "type": "RegisteredResources",
-      "items": [
-        {
-          "name": "F1_Dark07418606794069327.json",
-          "path": "F1_Dark07418606794069327.json",
-          "type": "CustomTheme"
         }
       ]
     }

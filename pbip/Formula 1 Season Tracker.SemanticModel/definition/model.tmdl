@@ -10,7 +10,7 @@ annotation __PBI_TimeIntelligenceEnabled = 1
 
 annotation PBI_QueryOrder = ["Races","Results","Qualifying","CurrentRound","MaxRound","StandingsSnapshot","Drivers","Constructors","_Measures"]
 
-annotation PBI_ProTooling = ["DevMode"]
+annotation PBI_ProTooling = ["DevMode","TMDLView_Desktop"]
 
 ref table Races
 ref table DateTableTemplate_9b412840-c04d-422e-b6ee-b6b1254bf22e

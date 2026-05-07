@@ -1,0 +1,14 @@
+createOrReplace
+
+	ref table _Measures
+
+		measure 'Avg Finish Position' =
+				
+				AVERAGEX (
+				    FILTER ( Results, NOT ISBLANK ( Results[Position] ) ),
+				    Results[Position]
+				)
+			lineageTag: 29c07833-91cb-40e6-beeb-02a682ec38ee
+
+			annotation PBI_FormatHint = {"isGeneralNumber":true}
+

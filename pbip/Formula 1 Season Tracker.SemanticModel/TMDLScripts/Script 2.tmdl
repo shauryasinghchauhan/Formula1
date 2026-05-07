@@ -1,0 +1,74 @@
+createOrReplace
+
+	ref table _Measures
+
+		measure 'Leaderboard HTML' =
+				
+				VAR LatestRound =
+				    CALCULATE ( MAX ( StandingsSnapshot[Round] ), ALL ( StandingsSnapshot ) )
+				VAR LeaderPoints =
+				    CALCULATE (
+				        MAX ( StandingsSnapshot[Points] ),
+				        StandingsSnapshot[Round] = LatestRound,
+				        StandingsSnapshot[Position] = 1,
+				        ALL ( StandingsSnapshot )
+				    )
+				VAR SnapshotRows =
+				    CALCULATETABLE (
+				        SUMMARIZE (
+				            StandingsSnapshot,
+				            StandingsSnapshot[DriverId],
+				            StandingsSnapshot[ConstructorId],
+				            StandingsSnapshot[Position],
+				            StandingsSnapshot[Points]
+				        ),
+				        StandingsSnapshot[Round] = LatestRound,
+				        ALL ( StandingsSnapshot )
+				    )
+				VAR Enriched =
+				    ADDCOLUMNS (
+				        SnapshotRows,
+				        "@Name",
+				            LOOKUPVALUE (
+				                Drivers[DriverName],
+				                Drivers[DriverId], StandingsSnapshot[DriverId]
+				            ),
+				        "@Color",
+				            LOOKUPVALUE (
+				                Constructors[TeamColor],
+				                Constructors[ConstructorId], StandingsSnapshot[ConstructorId]
+				            )
+				    )
+				VAR Body =
+				    CONCATENATEX (
+				        Enriched,
+				        "<tr>"
+				            & "<td style='border-left:6px solid " & [@Color]
+				                & ";padding:8px 12px;font-weight:700;font-size:15px;'>"
+				                & StandingsSnapshot[Position] & "</td>"
+				            & "<td style='padding:8px 12px;'>" & [@Name] & "</td>"
+				            & "<td style='padding:8px 12px;text-align:right;font-weight:600;'>"
+				                & FORMAT ( StandingsSnapshot[Points], "0" ) & "</td>"
+				            & "<td style='padding:8px 12px;text-align:right;color:#888;font-size:13px;'>"
+				                & IF (
+				                    StandingsSnapshot[Position] = 1,
+				                    "—",
+				                    "-" & FORMAT ( LeaderPoints - StandingsSnapshot[Points], "0" )
+				                )
+				            & "</td>"
+				        & "</tr>",
+				        "",
+				        StandingsSnapshot[Position], ASC
+				    )
+				RETURN
+				    "<div style='font-family:Inter,system-ui,-apple-system,sans-serif;'>"
+				    & "<table style='width:100%;border-collapse:collapse;font-size:14px;'>"
+				    & "<thead><tr style='border-bottom:2px solid #333;color:#888;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;'>"
+				    & "<th style='padding:8px 12px;'>#</th>"
+				    & "<th style='padding:8px 12px;'>Driver</th>"
+				    & "<th style='padding:8px 12px;text-align:right;'>Pts</th>"
+				    & "<th style='padding:8px 12px;text-align:right;'>Gap</th>"
+				    & "</tr></thead>"
+				    & "<tbody>" & Body & "</tbody></table></div>"
+			lineageTag: a93ea180-b4ba-4a66-99d1-a96834e72fed
+
